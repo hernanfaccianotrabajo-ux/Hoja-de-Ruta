@@ -4,891 +4,901 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>Hoja de Ruta — SIASA</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root{
-    --bg:#0E1726;
-    --surface:#16223573;
-    --surface-solid:#172538;
-    --surface-2:#1E3049;
-    --border:#2A3E59;
-    --accent:#FF8A3D;
-    --accent-dim:#7a4a26;
-    --accent-ink:#241404;
-    --good:#3ECF8E;
-    --bad:#FF6B6B;
-    --text:#EAF1F8;
-    --muted:#8AA0B8;
-    --road-dash: repeating-linear-gradient(90deg, var(--accent) 0 18px, transparent 18px 32px);
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:
-      radial-gradient(1200px 600px at 50% -10%, #1a2c44 0%, var(--bg) 55%);
-    color:var(--text);
-    font-family:'Inter',system-ui,sans-serif;
-    min-height:100vh;
-    -webkit-font-smoothing:antialiased;
-  }
-  h1,h2,h3{
-    font-family:'Barlow Condensed','Inter',sans-serif;
-    font-weight:800;
-    letter-spacing:0.01em;
-    margin:0;
-  }
-  .nums{font-variant-numeric:tabular-nums;}
-  button{font-family:inherit;}
-  .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:0 0 32px;}
-  .topbar{
-    padding:22px 20px 16px;
-    position:relative;
-  }
-  .road-line{
-    height:3px;
-    background-image:var(--road-dash);
-    background-size:32px 3px;
-    margin-top:10px;
-    border-radius:2px;
-    opacity:.9;
-  }
-  .brand{display:flex;align-items:baseline;gap:10px;}
-  .brand .mark{
-    width:34px;height:34px;border-radius:9px;
-    background:linear-gradient(155deg,var(--accent),#e0641a);
-    display:flex;align-items:center;justify-content:center;
-    font-family:'Barlow Condensed';font-weight:800;font-size:18px;color:var(--accent-ink);
-    flex-shrink:0;
-  }
-  .brand h1{font-size:26px;line-height:1;}
-  .brand .sub{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:4px;}
-  main{flex:1;padding:6px 20px 20px;display:flex;flex-direction:column;gap:16px;}
-
-  .card{
-    background:var(--surface-solid);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:20px;
-  }
-  .card + .card{margin-top:0;}
-  .card h2{font-size:22px;margin-bottom:4px;}
-  .card .hint{color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.5;}
-
-  .role-grid{display:grid;gap:14px;margin-top:8px;}
-  .role-btn{
-    background:var(--surface-2);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:22px 18px;
-    text-align:left;
-    color:var(--text);
-    cursor:pointer;
-    display:flex;align-items:center;gap:16px;
-    transition:transform .12s ease, border-color .12s ease, background .12s ease;
-  }
-  .role-btn:active{transform:scale(.98);}
-  .role-btn:hover{border-color:var(--accent);background:#23354d;}
-  .role-btn .icon{
-    width:46px;height:46px;border-radius:12px;background:var(--surface);
-    display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
-    border:1px solid var(--border);
-  }
-  .role-btn .label{font-family:'Barlow Condensed';font-weight:700;font-size:19px;}
-  .role-btn .desc{font-size:12.5px;color:var(--muted);margin-top:2px;}
-
-  label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
-  .field{margin-bottom:14px;}
-  input[type=text],input[type=number],input[type=date],select,textarea{
-    width:100%;
-    background:var(--surface-2);
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:13px 14px;
-    color:var(--text);
-    font-size:16px;
-    font-family:inherit;
-    outline:none;
-    transition:border-color .12s ease;
-  }
-  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
-  textarea{resize:vertical;min-height:64px;}
-  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) center,calc(100% - 13px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
-
-  .pin-dots{display:flex;justify-content:center;gap:14px;margin:18px 0 22px;}
-  .pin-dots .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .15s;}
-  .pin-dots .dot.filled{background:var(--accent);border-color:var(--accent);}
-  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-  .keypad button{
-    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
-    border-radius:12px;padding:18px 0;font-size:22px;font-family:'Barlow Condensed';font-weight:700;
-    cursor:pointer;
-  }
-  .keypad button:active{background:var(--accent-dim);}
-  .keypad button.del{font-size:15px;color:var(--muted);}
-
-  .btn{
-    display:block;width:100%;text-align:center;
-    background:var(--accent);color:var(--accent-ink);
-    border:none;border-radius:12px;
-    padding:15px 18px;
-    font-family:'Barlow Condensed';font-weight:700;font-size:18px;letter-spacing:.02em;
-    cursor:pointer;text-decoration:none;
-  }
-  .btn:active{transform:scale(.99);}
-  .btn:disabled{opacity:.5;cursor:not-allowed;}
-  .btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
-  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
-  .btn.danger{background:var(--bad);color:#2b0808;}
-  .btn.small{padding:9px 14px;font-size:14px;width:auto;display:inline-block;}
-
-  .row{display:flex;gap:10px;}
-  .row > *{flex:1;}
-
-  .topnav{display:flex;align-items:center;justify-content:space-between;padding:0 20px;margin-bottom:6px;}
-  .back-link{color:var(--muted);font-size:14px;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 0;}
-  .who{font-size:13px;color:var(--muted);}
-  .who b{color:var(--text);}
-
-  .msg{font-size:13.5px;padding:10px 12px;border-radius:10px;margin-bottom:14px;line-height:1.4;}
-  .msg.error{background:#3a1414;color:#ffb3b3;border:1px solid #5a2222;}
-  .msg.ok{background:#0f3122;color:#9ef0c8;border:1px solid #1f5a3e;}
-  .msg.info{background:#162a3f;color:#a9c7e0;border:1px solid #234564;}
-
-  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-  .stat{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;}
-  .stat .num{font-family:'Barlow Condensed';font-size:26px;font-weight:800;color:var(--accent);}
-  .stat .lbl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
-
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:8px 6px;border-bottom:1px solid var(--border);}
-  td{padding:10px 6px;border-bottom:1px solid var(--border);vertical-align:top;}
-  tr:last-child td{border-bottom:none;}
-  .trip-card{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:10px;}
-  .trip-card .top{display:flex;justify-content:space-between;align-items:baseline;}
-  .trip-card .route{font-family:'Barlow Condensed';font-weight:700;font-size:16px;}
-  .trip-card .km{font-family:'Barlow Condensed';font-weight:800;color:var(--accent);font-size:17px;}
-  .trip-card .meta{font-size:12px;color:var(--muted);margin-top:4px;}
-  .trip-card .obs{font-size:12.5px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--border);padding-top:6px;}
-
-  .tabbar{display:flex;gap:8px;margin-bottom:4px;}
-  .tabbar button{
-    flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);
-    padding:11px 0;border-radius:10px;font-family:'Barlow Condensed';font-weight:700;font-size:15px;cursor:pointer;
-  }
-  .tabbar button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
-
-  .chofer-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
-  .chofer-row.inactivo{opacity:.5;}
-  .chofer-row .name{font-family:'Barlow Condensed';font-weight:700;font-size:16px;}
-  .chofer-row .plate{font-size:12px;color:var(--muted);}
-  .chofer-row .acts{display:flex;gap:6px;}
-  .icon-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;}
-
-  .modal-bg{position:fixed;inset:0;background:rgba(5,9,16,.7);display:flex;align-items:flex-end;justify-content:center;z-index:50;}
-  .modal{background:var(--surface-solid);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:22px 20px 28px;width:100%;max-width:480px;}
-
-  .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.25);border-top-color:var(--accent-ink);border-radius:50%;display:inline-block;animation:spin .7s linear infinite;vertical-align:-3px;margin-right:8px;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:30px 10px;}
-  footer{text-align:center;color:#3e5470;font-size:11px;padding:18px 20px 0;}
+:root{
+  --bg:#0E1726;--surface-solid:#172538;--surface-2:#1E3049;--border:#2A3E59;
+  --accent:#FF8A3D;--accent-dim:#7a4a26;--accent-ink:#241404;
+  --good:#3ECF8E;--bad:#FF6B6B;--warn:#F0C040;
+  --text:#EAF1F8;--muted:#8AA0B8;
+  --road-dash:repeating-linear-gradient(90deg,var(--accent) 0 18px,transparent 18px 32px);
+}
+*{box-sizing:border-box;}html,body{margin:0;padding:0;}
+body{background:radial-gradient(1200px 600px at 50% -10%,#1a2c44 0%,var(--bg) 55%);
+  color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:'Barlow Condensed','Inter',sans-serif;font-weight:800;letter-spacing:.01em;margin:0;}
+button{font-family:inherit;} .nums{font-variant-numeric:tabular-nums;}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:0 0 40px;}
+.topbar{padding:22px 20px 16px;}
+.road-line{height:3px;background-image:var(--road-dash);background-size:32px 3px;margin-top:10px;border-radius:2px;opacity:.9;}
+.brand{display:flex;align-items:baseline;gap:10px;}
+.brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(155deg,var(--accent),#e0641a);
+  display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';font-weight:800;font-size:18px;color:var(--accent-ink);flex-shrink:0;}
+.brand h1{font-size:26px;line-height:1;}
+.brand .sub{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:4px;}
+main{flex:1;padding:6px 20px 20px;display:flex;flex-direction:column;gap:14px;}
+.card{background:var(--surface-solid);border:1px solid var(--border);border-radius:16px;padding:20px;}
+.card h2{font-size:22px;margin-bottom:4px;} .card .hint{color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.5;}
+.role-grid{display:grid;gap:12px;margin-top:8px;}
+.role-btn{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:20px 18px;text-align:left;
+  color:var(--text);cursor:pointer;display:flex;align-items:center;gap:16px;transition:.12s;}
+.role-btn:hover{border-color:var(--accent);background:#23354d;} .role-btn:active{transform:scale(.98);}
+.role-btn .icon{width:44px;height:44px;border-radius:12px;background:var(--surface-solid);display:flex;align-items:center;
+  justify-content:center;font-size:20px;flex-shrink:0;border:1px solid var(--border);}
+.role-btn .label{font-family:'Barlow Condensed';font-weight:700;font-size:18px;}
+.role-btn .desc{font-size:12px;color:var(--muted);margin-top:2px;}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.field{margin-bottom:13px;}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+  padding:13px 14px;color:var(--text);font-size:16px;font-family:inherit;outline:none;transition:.12s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:60px;}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 18px) center,calc(100% - 13px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+/* Toggle buttons */
+.toggle-group{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.toggle-btn{flex:1;background:var(--surface-2);border:none;border-right:1px solid var(--border);color:var(--muted);
+  padding:12px 0;font-family:'Barlow Condensed';font-weight:700;font-size:15px;cursor:pointer;transition:.12s;}
+.toggle-btn:last-child{border-right:none;}
+.toggle-btn.active{background:var(--accent);color:var(--accent-ink);}
+.toggle-btn.active-danger{background:#c0392b;color:#fff;}
+/* PIN */
+.pin-dots{display:flex;justify-content:center;gap:14px;margin:18px 0 22px;}
+.pin-dots .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:.15s;}
+.pin-dots .dot.filled{background:var(--accent);border-color:var(--accent);}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.keypad button{background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+  border-radius:12px;padding:18px 0;font-size:22px;font-family:'Barlow Condensed';font-weight:700;cursor:pointer;}
+.keypad button:active{background:var(--accent-dim);} .keypad button.del{font-size:15px;color:var(--muted);}
+/* Botones */
+.btn{display:block;width:100%;text-align:center;background:var(--accent);color:var(--accent-ink);border:none;
+  border-radius:12px;padding:15px 18px;font-family:'Barlow Condensed';font-weight:700;font-size:18px;letter-spacing:.02em;cursor:pointer;}
+.btn:active{transform:scale(.99);} .btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn.danger{background:var(--bad);color:#2b0808;}
+.btn.good{background:var(--good);color:#082b1a;}
+.btn.small{padding:9px 14px;font-size:14px;width:auto;display:inline-block;}
+.btn.jt{background:linear-gradient(135deg,#1a5276,#2e86c1);color:#fff;}
+.row{display:flex;gap:10px;} .row>*{flex:1;}
+/* Topnav */
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:0 20px;margin-bottom:6px;}
+.back-link{color:var(--muted);font-size:14px;background:none;border:none;cursor:pointer;padding:8px 0;}
+.who{font-size:13px;color:var(--muted);} .who b{color:var(--text);}
+/* Mensajes */
+.msg{font-size:13.5px;padding:10px 12px;border-radius:10px;margin-bottom:12px;line-height:1.4;}
+.msg.error{background:#3a1414;color:#ffb3b3;border:1px solid #5a2222;}
+.msg.ok{background:#0f3122;color:#9ef0c8;border:1px solid #1f5a3e;}
+.msg.info{background:#162a3f;color:#a9c7e0;border:1px solid #234564;}
+/* Stats */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.stat{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;}
+.stat .num{font-family:'Barlow Condensed';font-size:26px;font-weight:800;color:var(--accent);}
+.stat .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+/* Badges */
+.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.badge.pendiente{background:#2a2a10;color:var(--warn);border:1px solid #4a4a20;}
+.badge.aprobado{background:#0f3122;color:var(--good);border:1px solid #1f5a3e;}
+.badge.rechazado{background:#3a1414;color:var(--bad);border:1px solid #5a2222;}
+.badge.ida,.badge.vuelta{background:var(--surface-2);color:var(--muted);border:1px solid var(--border);}
+.badge.general{background:var(--surface-2);color:var(--muted);border:1px solid var(--border);}
+.badge.peligrosa{background:#3a2010;color:var(--accent);border:1px solid #5a3820;}
+/* Tabs */
+.tabbar{display:flex;gap:8px;margin-bottom:4px;}
+.tabbar button{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);
+  padding:11px 0;border-radius:10px;font-family:'Barlow Condensed';font-weight:700;font-size:15px;cursor:pointer;}
+.tabbar button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+/* Trip cards */
+.trip-card{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:10px;}
+.trip-card .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.trip-card .route{font-family:'Barlow Condensed';font-weight:700;font-size:16px;flex:1;}
+.trip-card .km{font-family:'Barlow Condensed';font-weight:800;color:var(--accent);font-size:17px;white-space:nowrap;}
+.trip-card .meta{font-size:12px;color:var(--muted);margin-top:4px;}
+.trip-card .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.trip-card .obs{font-size:12.5px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--border);padding-top:6px;}
+.trip-card .jt-obs{font-size:12px;margin-top:6px;border-top:1px dashed var(--border);padding-top:6px;}
+.trip-card .jt-obs.rechazado{color:#ff9999;}
+.trip-card .km-row{margin-top:4px;}
+.trip-card .km-aprobado{font-size:12px;color:var(--good);}
+.trip-card .km-original{font-size:11px;color:var(--muted);text-decoration:line-through;}
+/* Choferes */
+.chofer-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.chofer-row.inactivo{opacity:.5;}
+.chofer-row .name{font-family:'Barlow Condensed';font-weight:700;font-size:16px;}
+.chofer-row .plate{font-size:12px;color:var(--muted);}
+.chofer-row .acts{display:flex;gap:6px;}
+.icon-btn{background:var(--surface-solid);border:1px solid var(--border);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(5,9,16,.75);display:flex;align-items:flex-end;justify-content:center;z-index:50;}
+.modal{background:var(--surface-solid);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:22px 20px 32px;width:100%;max-width:480px;}
+/* Spinner */
+.spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.2);border-top-color:var(--accent-ink);border-radius:50%;
+  display:inline-block;animation:spin .7s linear infinite;vertical-align:-3px;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty{text-align:center;color:var(--muted);font-size:13.5px;padding:28px 10px;}
+footer{text-align:center;color:#3e5470;font-size:11px;padding:18px 20px 0;}
+/* JT panel pending counter */
+.pending-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--warn);color:#1a1a00;
+  border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:800;margin-left:8px;}
+.jt-accent{color:#5dade2;}
 </style>
 </head>
 <body>
 <div id="app" class="app"></div>
-
 <script>
-/* =======================================================================
-   CONFIGURACIÓN — completá esto antes de publicar
-   ======================================================================= */
+/* ============================================================
+   CONFIG
+   ============================================================ */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzaHXOZglNNJFRTiGLSCsuc_aJ_7ITuReXyz-FAgWOhAbMpD6aiG89fmqkKg-ismTzn/exec";
 
-/* =======================================================================
-   ESTADO GLOBAL
-   ======================================================================= */
+/* ============================================================
+   ESTADO
+   ============================================================ */
 const state = {
-  screen: 'inicio',           // inicio | login-chofer | chofer | login-admin | admin
-  choferes: [],                // lista pública para el selector de login
-  choferSeleccionado: null,    // {id, nombre, patente} elegido en el picker antes del PIN
-  pin: '',
-  chofer: null,                // chofer logueado {id, nombre, patente}
-  adminToken: null,
-  adminConfigurado: null,      // null = sin chequear, true/false luego
-  adminTab: 'viajes',          // viajes | choferes
-  viajes: [],
-  misViajes: [],
-  choferesAdmin: [],
-  filtroChofer: '',
-  loading: false,
-  msg: null,                   // {type:'error'|'ok'|'info', text:''}
-  modal: null,                 // {title, body(html), onClose}
+  screen:'inicio',
+  // chofer
+  choferes:[], choferSeleccionado:null, pin:'', chofer:null, misViajes:[],
+  // admin
+  adminToken:null, adminConfigurado:null, adminTab:'viajes',
+  viajes:[], choferesAdmin:[], filtroChofer:'', filtroEstado:'todos',
+  // jefe de tráfico
+  jtToken:null, jtConfigurado:null, viajesPendientes:[],
+  // ui
+  loading:false, msg:null, modal:null,
 };
+function setState(p){ Object.assign(state,p); render(); }
+function showMsg(type,text){ state.msg={type,text}; render(); }
+function clearMsg(){ state.msg=null; }
 
-function setState(patch){ Object.assign(state, patch); render(); }
-function showMsg(type, text){ state.msg = {type, text}; render(); }
-function clearMsg(){ state.msg = null; }
-
-/* =======================================================================
+/* ============================================================
    API
-   ======================================================================= */
-async function api(action, payload = {}) {
-  if (APPS_SCRIPT_URL.indexOf('PEGAR_ACA') === 0) {
-    throw new Error('Todavía no configuraste la URL de Apps Script en el archivo (variable APPS_SCRIPT_URL).');
-  }
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    // text/plain evita el preflight CORS de los Web Apps de Apps Script.
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action, ...payload }),
+   ============================================================ */
+async function api(action, payload={}) {
+  const res = await fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action,...payload}),
   });
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error || 'Error desconocido');
+  if(!data.ok) throw new Error(data.error||'Error desconocido');
   return data;
 }
-
-async function withLoading(fn) {
-  setState({ loading: true });
-  try {
-    await fn();
-  } catch (err) {
-    showMsg('error', err.message);
-  } finally {
-    state.loading = false;
-    render();
-  }
+async function withLoading(fn){
+  setState({loading:true});
+  try{ await fn(); } catch(err){ showMsg('error',err.message); }
+  finally{ state.loading=false; render(); }
 }
 
-/* =======================================================================
-   HASH SHA-256 (Web Crypto)
-   ======================================================================= */
-async function sha256(text) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+async function sha256(text){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
+function fmtFecha(f){ if(!f)return''; const [y,m,d]=String(f).split('-'); return d&&m?`${d}/${m}/${y}`:f; }
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* =======================================================================
-   HELPERS UI
-   ======================================================================= */
-function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
-function fmtFecha(f){
-  if(!f) return '';
-  const [y,m,d] = String(f).split('-');
-  return d && m ? `${d}/${m}/${y}` : f;
-}
-function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-/* =======================================================================
+/* ============================================================
    NAVEGACIÓN
-   ======================================================================= */
-function irInicio(){ clearMsg(); setState({ screen:'inicio', pin:'', choferSeleccionado:null }); }
+   ============================================================ */
+function irInicio(){ clearMsg(); setState({screen:'inicio',pin:'',choferSeleccionado:null}); }
 
 async function irLoginChofer(){
-  clearMsg();
-  setState({ screen:'login-chofer', pin:'', choferSeleccionado:null, loading:true });
-  try {
-    const data = await api('getChoferes');
-    setState({ choferes: data.choferes, loading:false });
-  } catch(err){ state.loading=false; showMsg('error', err.message); }
+  clearMsg(); setState({screen:'login-chofer',pin:'',choferSeleccionado:null,loading:true});
+  try{ const d=await api('getChoferes'); setState({choferes:d.choferes,loading:false}); }
+  catch(e){ state.loading=false; showMsg('error',e.message); }
 }
 
 async function irLoginAdmin(){
-  clearMsg();
-  setState({ screen:'login-admin', loading:true });
-  try {
-    const data = await api('estadoAdmin');
-    setState({ adminConfigurado: data.configurado, loading:false });
-  } catch(err){ state.loading=false; showMsg('error', err.message); }
+  clearMsg(); setState({screen:'login-admin',loading:true});
+  try{ const d=await api('estadoAdmin'); setState({adminConfigurado:d.configurado,loading:false}); }
+  catch(e){ state.loading=false; showMsg('error',e.message); }
+}
+
+async function irLoginJT(){
+  clearMsg(); setState({screen:'login-jt',loading:true});
+  try{ const d=await api('estadoJT'); setState({jtConfigurado:d.configurado,loading:false}); }
+  catch(e){ state.loading=false; showMsg('error',e.message); }
 }
 
 function cerrarSesion(){
-  setState({ screen:'inicio', chofer:null, adminToken:null, pin:'', choferSeleccionado:null, viajes:[], misViajes:[] });
+  setState({screen:'inicio',chofer:null,adminToken:null,jtToken:null,pin:'',
+    choferSeleccionado:null,viajes:[],misViajes:[],viajesPendientes:[]});
 }
 
-/* =======================================================================
-   LOGIN CHOFER (PIN pad)
-   ======================================================================= */
-function elegirChofer(c){ clearMsg(); setState({ choferSeleccionado: c, pin:'' }); }
-
+/* ============================================================
+   LOGIN CHOFER
+   ============================================================ */
+function elegirChofer(c){ clearMsg(); setState({choferSeleccionado:c,pin:''}); }
 function pinPress(d){
-  if (state.pin.length >= 4) return;
-  state.pin += d;
-  render();
-  if (state.pin.length === 4) intentarLoginChofer();
+  if(state.pin.length>=4)return;
+  state.pin+=d; render();
+  if(state.pin.length===4) intentarLoginChofer();
 }
-function pinDel(){ state.pin = state.pin.slice(0,-1); render(); }
-
+function pinDel(){ state.pin=state.pin.slice(0,-1); render(); }
 async function intentarLoginChofer(){
   clearMsg();
-  await withLoading(async () => {
-    const pinHash = await sha256(state.pin);
-    const data = await api('loginChofer', { choferId: state.choferSeleccionado.id, pinHash });
-    setState({ chofer: data.chofer, screen:'chofer', pin:'', choferSeleccionado:null });
+  await withLoading(async()=>{
+    const pinHash=await sha256(state.pin);
+    const d=await api('loginChofer',{choferId:state.choferSeleccionado.id,pinHash});
+    setState({chofer:d.chofer,screen:'chofer',pin:'',choferSeleccionado:null});
     await cargarMisViajes();
   });
-  if (state.msg && state.msg.type === 'error') setState({ pin:'' });
+  if(state.msg?.type==='error') setState({pin:''});
 }
 
-/* =======================================================================
+/* ============================================================
    PANTALLA CHOFER
-   ======================================================================= */
+   ============================================================ */
 async function cargarMisViajes(){
-  try {
-    const data = await api('misViajes', { choferId: state.chofer.id });
-    setState({ misViajes: data.viajes.reverse() });
-  } catch(err){ showMsg('error', err.message); }
+  try{ const d=await api('misViajes',{choferId:state.chofer.id}); setState({misViajes:d.viajes}); }
+  catch(e){ showMsg('error',e.message); }
 }
-
 async function enviarViaje(form){
   clearMsg();
-  const fd = new FormData(form);
-  const km = Number(fd.get('km'));
-  if (!fd.get('fecha') || !fd.get('origen') || !fd.get('destino') || !km) {
-    showMsg('error', 'Completá fecha, origen, destino y kilómetros.'); return;
+  const fd=new FormData(form);
+  const km=Number(fd.get('km'));
+  if(!fd.get('fecha')||!fd.get('origen')||!fd.get('destino')||!km){
+    showMsg('error','Completá fecha, origen, destino y kilómetros.'); return;
   }
-  await withLoading(async () => {
-    await api('crearViaje', {
-      fecha: fd.get('fecha'),
-      choferId: state.chofer.id,
-      choferNombre: state.chofer.nombre,
-      patente: fd.get('patente') || state.chofer.patente,
-      origen: fd.get('origen'),
-      destino: fd.get('destino'),
-      km,
-      observaciones: fd.get('observaciones'),
-      creadoPor: state.chofer.nombre,
+  await withLoading(async()=>{
+    await api('crearViaje',{
+      fecha:fd.get('fecha'), choferId:state.chofer.id, choferNombre:state.chofer.nombre,
+      patente:fd.get('patente')||state.chofer.patente,
+      origen:fd.get('origen'), destino:fd.get('destino'), km,
+      observaciones:fd.get('observaciones'), creadoPor:state.chofer.nombre,
+      tipoViaje:fd.get('tipo_viaje')||'ida',
+      tipoCarga:fd.get('tipo_carga')||'general',
     });
-    showMsg('ok', 'Viaje cargado correctamente.');
+    showMsg('ok','Viaje cargado. Quedará pendiente de aprobación del Jefe de Tráfico.');
     form.reset();
+    // Re-attach toggles after reset
+    setupToggles(form);
     await cargarMisViajes();
   });
 }
+function setupToggles(form){
+  form.querySelectorAll('.toggle-group').forEach(group=>{
+    const name=group.dataset.input;
+    group.querySelectorAll('.toggle-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        group.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active','active-danger'));
+        const cls=btn.dataset.cls||'active';
+        btn.classList.add(cls);
+        form.querySelector(`input[name="${name}"]`).value=btn.dataset.val;
+      };
+    });
+  });
+}
 
-/* =======================================================================
-   LOGIN / SETUP ADMIN
-   ======================================================================= */
-async function enviarAdminPassword(form, modo){
+/* ============================================================
+   LOGIN ADMIN
+   ============================================================ */
+async function enviarAdminPassword(form,modo){
   clearMsg();
-  const fd = new FormData(form);
-  const pass = fd.get('password');
-  const pass2 = fd.get('password2');
-  if (!pass || pass.length < 4) { showMsg('error','La contraseña debe tener al menos 4 caracteres.'); return; }
-  if (modo === 'crear' && pass !== pass2) { showMsg('error','Las contraseñas no coinciden.'); return; }
-
-  await withLoading(async () => {
-    const passwordHash = await sha256(pass);
-    const data = modo === 'crear'
-      ? await api('crearPasswordAdmin', { passwordHash })
-      : await api('loginAdmin', { passwordHash });
-    setState({ adminToken: data.adminToken, screen:'admin', adminTab:'viajes' });
+  const fd=new FormData(form);
+  const pass=fd.get('password'), pass2=fd.get('password2');
+  if(!pass||pass.length<4){showMsg('error','La contraseña debe tener al menos 4 caracteres.');return;}
+  if(modo==='crear'&&pass!==pass2){showMsg('error','Las contraseñas no coinciden.');return;}
+  await withLoading(async()=>{
+    const h=await sha256(pass);
+    const d=modo==='crear'?await api('crearPasswordAdmin',{passwordHash:h}):await api('loginAdmin',{passwordHash:h});
+    setState({adminToken:d.adminToken,screen:'admin',adminTab:'viajes'});
     await cargarPanelAdmin();
   });
 }
 
-/* =======================================================================
+/* ============================================================
    PANEL ADMIN
-   ======================================================================= */
+   ============================================================ */
 async function cargarPanelAdmin(){
-  try {
-    const [v, c] = await Promise.all([
-      api('listarViajes', { adminToken: state.adminToken }),
-      api('listarChoferesAdmin', { adminToken: state.adminToken }),
+  try{
+    const [v,c]=await Promise.all([
+      api('listarViajes',{adminToken:state.adminToken,filtroEstado:'todos'}),
+      api('listarChoferesAdmin',{adminToken:state.adminToken}),
     ]);
-    setState({ viajes: v.viajes.reverse(), choferesAdmin: c.choferes });
-  } catch(err){ showMsg('error', err.message); }
+    setState({viajes:v.viajes,choferesAdmin:c.choferes});
+  }catch(e){showMsg('error',e.message);}
 }
-
-function setAdminTab(tab){ setState({ adminTab: tab }); }
-
-async function adminEliminarViaje(id){
-  state.modal = {
-    title: '¿Eliminar viaje?',
-    body: '<p style="color:var(--muted);font-size:14px;">Esta acción no se puede deshacer.</p>',
-    actions: [
-      { label:'Cancelar', cls:'secondary', onClick: cerrarModal },
-      { label:'Eliminar', cls:'danger', onClick: async () => {
-          cerrarModal();
-          await withLoading(async () => {
-            await api('eliminarViaje', { adminToken: state.adminToken, viajeId: id });
-            await cargarPanelAdmin();
-          });
-        } },
-    ]
-  };
-  render();
-}
-
-function cerrarModal(){ state.modal = null; render(); }
-
-function exportarExcel(){
-  const filtrados = filtrarViajes();
-  if (!filtrados.length) { showMsg('info','No hay viajes para exportar.'); return; }
-  const filas = filtrados.map(v => ({
-    Fecha: fmtFecha(v.fecha), Chofer: v.choferNombre, Patente: v.patente,
-    Origen: v.origen, Destino: v.destino, Km: v.km, Observaciones: v.observaciones
-  }));
-  const ws = XLSX.utils.json_to_sheet(filas);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Viajes');
-  XLSX.writeFile(wb, `hoja-de-ruta_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
-
+function setAdminTab(tab){ setState({adminTab:tab}); }
 function filtrarViajes(){
-  if (!state.filtroChofer) return state.viajes;
-  return state.viajes.filter(v => v.choferId === state.filtroChofer);
+  let v=state.viajes;
+  if(state.filtroChofer) v=v.filter(x=>x.choferId===state.filtroChofer);
+  if(state.filtroEstado&&state.filtroEstado!=='todos') v=v.filter(x=>x.estado===state.filtroEstado);
+  return v;
 }
-
-// --- Gestión de choferes ---
+async function adminEliminarViaje(id){
+  state.modal={title:'¿Eliminar viaje?',
+    body:'<p style="color:var(--muted);font-size:14px;">Esta acción no se puede deshacer.</p>',
+    actions:[
+      {label:'Cancelar',cls:'secondary',onClick:cerrarModal},
+      {label:'Eliminar',cls:'danger',onClick:async()=>{
+        cerrarModal();
+        await withLoading(async()=>{await api('eliminarViaje',{adminToken:state.adminToken,viajeId:id}); await cargarPanelAdmin();});
+      }},
+    ]};
+  render();
+}
+function exportarExcel(){
+  const filtrados=filtrarViajes();
+  if(!filtrados.length){showMsg('info','No hay viajes para exportar.');return;}
+  const filas=filtrados.map(v=>({
+    Fecha:fmtFecha(v.fecha), Chofer:v.choferNombre, Patente:v.patente,
+    Origen:v.origen, Destino:v.destino,
+    'Tipo Viaje':v.tipoViaje, 'Tipo Carga':v.tipoCarga,
+    'Km Declarados':v.km, Estado:v.estado,
+    'Km Aprobados':v.kmAprobados||'',
+    'Obs. JT':v.observacionJT||'',
+    Observaciones:v.observaciones,
+  }));
+  const ws=XLSX.utils.json_to_sheet(filas);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Viajes');
+  XLSX.writeFile(wb,`hoja-de-ruta_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+// Gestión choferes
+function cerrarModal(){ state.modal=null; render(); }
 function abrirModalAgregarChofer(){
-  state.modal = {
-    title:'Nuevo chofer',
-    body: `
-      <div class="field"><label>Nombre</label><input id="m-nombre" type="text" placeholder="Nombre y apellido"></div>
-      <div class="field"><label>Patente (opcional)</label><input id="m-patente" type="text" placeholder="AB123CD"></div>
-    `,
+  state.modal={title:'Nuevo chofer',
+    body:`<div class="field"><label>Nombre</label><input id="m-nombre" type="text" placeholder="Nombre y apellido"></div>
+          <div class="field"><label>Patente (opcional)</label><input id="m-patente" type="text" placeholder="AB123CD"></div>`,
     actions:[
-      { label:'Cancelar', cls:'secondary', onClick: cerrarModal },
-      { label:'Crear', cls:'', onClick: async () => {
-          const nombre = document.getElementById('m-nombre').value.trim();
-          const patente = document.getElementById('m-patente').value.trim();
-          if (!nombre) return;
-          cerrarModal();
-          await withLoading(async () => {
-            const data = await api('agregarChofer', { adminToken: state.adminToken, nombre, patente });
-            await cargarPanelAdmin();
-            mostrarPinGenerado(data.chofer.nombre, data.chofer.pin);
-          });
-        } },
-    ]
-  };
+      {label:'Cancelar',cls:'secondary',onClick:cerrarModal},
+      {label:'Crear',cls:'',onClick:async()=>{
+        const nombre=document.getElementById('m-nombre').value.trim();
+        const patente=document.getElementById('m-patente').value.trim();
+        if(!nombre)return;
+        cerrarModal();
+        await withLoading(async()=>{
+          const d=await api('agregarChofer',{adminToken:state.adminToken,nombre,patente});
+          await cargarPanelAdmin(); mostrarPinGenerado(d.chofer.nombre,d.chofer.pin);
+        });
+      }},
+    ]};
   render();
 }
-
-function mostrarPinGenerado(nombre, pin){
-  state.modal = {
-    title:'PIN generado',
-    body:`<p style="font-size:14px;color:var(--muted);">Anotá este PIN y pasáselo a <b style="color:var(--text)">${escapeHtml(nombre)}</b>. No se va a volver a mostrar.</p>
+function mostrarPinGenerado(nombre,pin){
+  state.modal={title:'PIN generado',
+    body:`<p style="font-size:14px;color:var(--muted);">Anotá este PIN y pasáselo a <b style="color:var(--text)">${esc(nombre)}</b>. No se vuelve a mostrar.</p>
           <div style="text-align:center;font-family:'Barlow Condensed';font-size:40px;font-weight:800;letter-spacing:.15em;color:var(--accent);margin:14px 0;">${pin}</div>`,
-    actions:[ { label:'Listo', cls:'', onClick: cerrarModal } ]
-  };
+    actions:[{label:'Listo',cls:'',onClick:cerrarModal}]};
   render();
 }
-
 function abrirModalEditarChofer(c){
-  state.modal = {
-    title:'Editar chofer',
-    body:`
-      <div class="field"><label>Nombre</label><input id="m-nombre" type="text" value="${escapeHtml(c.nombre)}"></div>
-      <div class="field"><label>Patente</label><input id="m-patente" type="text" value="${escapeHtml(c.patente||'')}"></div>
-    `,
+  state.modal={title:'Editar chofer',
+    body:`<div class="field"><label>Nombre</label><input id="m-nombre" type="text" value="${esc(c.nombre)}"></div>
+          <div class="field"><label>Patente</label><input id="m-patente" type="text" value="${esc(c.patente||'')}"></div>`,
     actions:[
-      { label:'Cancelar', cls:'secondary', onClick: cerrarModal },
-      { label:'Guardar', cls:'', onClick: async () => {
-          const nombre = document.getElementById('m-nombre').value.trim();
-          const patente = document.getElementById('m-patente').value.trim();
-          if (!nombre) return;
-          cerrarModal();
-          await withLoading(async () => {
-            await api('editarChofer', { adminToken: state.adminToken, choferId: c.id, nombre, patente });
-            await cargarPanelAdmin();
-          });
-        } },
-    ]
-  };
+      {label:'Cancelar',cls:'secondary',onClick:cerrarModal},
+      {label:'Guardar',cls:'',onClick:async()=>{
+        const nombre=document.getElementById('m-nombre').value.trim();
+        const patente=document.getElementById('m-patente').value.trim();
+        if(!nombre)return; cerrarModal();
+        await withLoading(async()=>{await api('editarChofer',{adminToken:state.adminToken,choferId:c.id,nombre,patente}); await cargarPanelAdmin();});
+      }},
+    ]};
+  render();
+}
+async function adminToggleChofer(c){
+  await withLoading(async()=>{await api('toggleChofer',{adminToken:state.adminToken,choferId:c.id,activo:!c.activo}); await cargarPanelAdmin();});
+}
+function adminResetearPin(c){
+  state.modal={title:'¿Resetear PIN?',
+    body:`<p style="color:var(--muted);font-size:14px;">Nuevo PIN para <b style="color:var(--text)">${esc(c.nombre)}</b>. El anterior deja de funcionar.</p>`,
+    actions:[
+      {label:'Cancelar',cls:'secondary',onClick:cerrarModal},
+      {label:'Resetear',cls:'',onClick:async()=>{
+        cerrarModal();
+        await withLoading(async()=>{const d=await api('resetearPinChofer',{adminToken:state.adminToken,choferId:c.id}); mostrarPinGenerado(c.nombre,d.pin);});
+      }},
+    ]};
+  render();
+}
+function adminEliminarChofer(c){
+  state.modal={title:'¿Eliminar chofer?',
+    body:`<p style="color:var(--muted);font-size:14px;">Se borra a <b style="color:var(--text)">${esc(c.nombre)}</b>. Sus viajes cargados NO se borran. Para que solo no pueda ingresar, usá "Dar de baja".</p>`,
+    actions:[
+      {label:'Cancelar',cls:'secondary',onClick:cerrarModal},
+      {label:'Eliminar',cls:'danger',onClick:async()=>{
+        cerrarModal();
+        await withLoading(async()=>{await api('eliminarChofer',{adminToken:state.adminToken,choferId:c.id}); await cargarPanelAdmin();});
+      }},
+    ]};
   render();
 }
 
-async function adminToggleChofer(c){
-  await withLoading(async () => {
-    await api('toggleChofer', { adminToken: state.adminToken, choferId: c.id, activo: !c.activo });
-    await cargarPanelAdmin();
+/* ============================================================
+   LOGIN JT
+   ============================================================ */
+async function enviarJTPassword(form,modo){
+  clearMsg();
+  const fd=new FormData(form);
+  const pass=fd.get('password'),pass2=fd.get('password2');
+  if(!pass||pass.length<4){showMsg('error','La contraseña debe tener al menos 4 caracteres.');return;}
+  if(modo==='crear'&&pass!==pass2){showMsg('error','Las contraseñas no coinciden.');return;}
+  await withLoading(async()=>{
+    const h=await sha256(pass);
+    const d=modo==='crear'?await api('crearPasswordJT',{passwordHash:h}):await api('loginJT',{passwordHash:h});
+    setState({jtToken:d.jtToken,screen:'jt'});
+    await cargarViajesPendientes();
   });
 }
 
-function adminResetearPin(c){
-  state.modal = {
-    title:'¿Resetear PIN?',
-    body:`<p style="color:var(--muted);font-size:14px;">Se va a generar un PIN nuevo para <b style="color:var(--text)">${escapeHtml(c.nombre)}</b>. El anterior dejará de funcionar.</p>`,
+/* ============================================================
+   PANEL JEFE DE TRÁFICO
+   ============================================================ */
+async function cargarViajesPendientes(){
+  try{ const d=await api('listarViajesPendientes',{jtToken:state.jtToken}); setState({viajesPendientes:d.viajes}); }
+  catch(e){ showMsg('error',e.message); }
+}
+function abrirModalAprobar(v){
+  state.modal={title:'Aprobar viaje',
+    body:`
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">
+        ${esc(v.choferNombre)} · ${esc(v.origen)} → ${esc(v.destino)} · ${fmtFecha(v.fecha)}
+      </p>
+      <div class="field">
+        <label>Km declarados por el chofer</label>
+        <input type="text" value="${v.km} km" disabled style="opacity:.6;">
+      </div>
+      <div class="field">
+        <label>Km a aprobar <span style="color:var(--muted);font-weight:400;">(si difieren del chofer)</span></label>
+        <input id="m-km" type="number" min="0" step="0.1" placeholder="${v.km}" value="${v.km}">
+      </div>
+      <div class="field">
+        <label>Observación (opcional)</label>
+        <textarea id="m-obs" placeholder="Ej: km ajustado según GPS"></textarea>
+      </div>`,
     actions:[
-      { label:'Cancelar', cls:'secondary', onClick: cerrarModal },
-      { label:'Resetear', cls:'', onClick: async () => {
-          cerrarModal();
-          await withLoading(async () => {
-            const data = await api('resetearPinChofer', { adminToken: state.adminToken, choferId: c.id });
-            mostrarPinGenerado(c.nombre, data.pin);
-          });
-        } },
-    ]
-  };
+      {label:'Cancelar',cls:'secondary',onClick:cerrarModal},
+      {label:'✅ Aprobar',cls:'good',onClick:async()=>{
+        const kmA=document.getElementById('m-km').value;
+        const obs=document.getElementById('m-obs').value.trim();
+        cerrarModal();
+        await withLoading(async()=>{
+          await api('aprobarViaje',{jtToken:state.jtToken,viajeId:v.id,kmAprobados:kmA,observacion:obs});
+          showMsg('ok','Viaje aprobado.');
+          await cargarViajesPendientes();
+        });
+      }},
+    ]};
+  render();
+}
+function abrirModalRechazar(v){
+  state.modal={title:'Rechazar viaje',
+    body:`
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">
+        ${esc(v.choferNombre)} · ${esc(v.origen)} → ${esc(v.destino)} · ${fmtFecha(v.fecha)}
+      </p>
+      <div class="field">
+        <label>Motivo de rechazo <span style="color:var(--bad);">*</span></label>
+        <textarea id="m-motivo" placeholder="Explicá el motivo para que el chofer pueda corregirlo…"></textarea>
+      </div>`,
+    actions:[
+      {label:'Cancelar',cls:'secondary',onClick:cerrarModal},
+      {label:'❌ Rechazar',cls:'danger',onClick:async()=>{
+        const motivo=document.getElementById('m-motivo').value.trim();
+        if(!motivo){document.getElementById('m-motivo').focus();return;}
+        cerrarModal();
+        await withLoading(async()=>{
+          await api('rechazarViaje',{jtToken:state.jtToken,viajeId:v.id,observacion:motivo});
+          showMsg('ok','Viaje rechazado.');
+          await cargarViajesPendientes();
+        });
+      }},
+    ]};
   render();
 }
 
-function adminEliminarChofer(c){
-  state.modal = {
-    title:'¿Eliminar chofer definitivamente?',
-    body:`<p style="color:var(--muted);font-size:14px;">Se borra a <b style="color:var(--text)">${escapeHtml(c.nombre)}</b> de la lista. Sus viajes ya cargados NO se borran. Si solo querés que no pueda loguearse más, mejor usá "Dar de baja".</p>`,
-    actions:[
-      { label:'Cancelar', cls:'secondary', onClick: cerrarModal },
-      { label:'Eliminar', cls:'danger', onClick: async () => {
-          cerrarModal();
-          await withLoading(async () => {
-            await api('eliminarChofer', { adminToken: state.adminToken, choferId: c.id });
-            await cargarPanelAdmin();
-          });
-        } },
-    ]
-  };
-  render();
-}
-
-/* =======================================================================
-   RENDER
-   ======================================================================= */
+/* ============================================================
+   RENDER PRINCIPAL
+   ============================================================ */
 function render(){
-  const root = document.getElementById('app');
-  root.innerHTML = '';
+  const root=document.getElementById('app');
+  root.innerHTML='';
   root.appendChild(renderTopbar());
-
-  const main = document.createElement('main');
-  if (state.msg) main.appendChild(renderMsg());
-
+  const main=document.createElement('main');
+  if(state.msg) main.appendChild(renderMsg());
   switch(state.screen){
-    case 'inicio': main.appendChild(renderInicio()); break;
-    case 'login-chofer': main.appendChild(renderLoginChofer()); break;
-    case 'chofer': main.appendChild(renderChofer()); break;
+    case 'inicio':      main.appendChild(renderInicio()); break;
+    case 'login-chofer':main.appendChild(renderLoginChofer()); break;
+    case 'chofer':      main.appendChild(renderChofer()); break;
     case 'login-admin': main.appendChild(renderLoginAdmin()); break;
-    case 'admin': main.appendChild(renderAdmin()); break;
+    case 'admin':       main.appendChild(renderAdmin()); break;
+    case 'login-jt':    main.appendChild(renderLoginJT()); break;
+    case 'jt':          main.appendChild(renderJT()); break;
   }
   root.appendChild(main);
-
-  const foot = el(`<footer>Hoja de Ruta · SIASA</footer>`);
-  root.appendChild(foot);
-
-  if (state.modal) root.appendChild(renderModal());
+  root.appendChild(el('<footer>Hoja de Ruta · SIASA</footer>'));
+  if(state.modal) root.appendChild(renderModal());
 }
 
 function renderTopbar(){
-  const wrap = el(`
-    <div>
-      <div class="topbar">
-        <div class="brand">
-          <div class="mark">HR</div>
-          <div>
-            <h1>Hoja de Ruta</h1>
-            <div class="sub">SIASA · Logística</div>
-          </div>
-        </div>
-        <div class="road-line"></div>
+  const wrap=el(`<div>
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">HR</div>
+        <div><h1>Hoja de Ruta</h1><div class="sub">SIASA · Logística</div></div>
       </div>
-      <div class="topnav"></div>
+      <div class="road-line"></div>
     </div>
-  `);
-  const nav = wrap.querySelector('.topnav');
-
-  if (state.screen === 'login-chofer' || state.screen === 'login-admin') {
-    const back = el(`<button class="back-link">← Volver</button>`);
-    back.onclick = irInicio;
-    nav.appendChild(back);
-  } else if (state.screen === 'chofer') {
-    nav.appendChild(el(`<span class="who">Hola, <b>${escapeHtml(state.chofer.nombre)}</b></span>`));
-    const out = el(`<button class="back-link">Salir →</button>`);
-    out.onclick = cerrarSesion;
-    nav.appendChild(out);
-  } else if (state.screen === 'admin') {
-    nav.appendChild(el(`<span class="who">Panel <b>Administrador</b></span>`));
-    const out = el(`<button class="back-link">Salir →</button>`);
-    out.onclick = cerrarSesion;
-    nav.appendChild(out);
-  } else {
-    nav.appendChild(el(`<span></span>`));
-  }
+    <div class="topnav"></div>
+  </div>`);
+  const nav=wrap.querySelector('.topnav');
+  if(['login-chofer','login-admin','login-jt'].includes(state.screen)){
+    const b=el('<button class="back-link">← Volver</button>'); b.onclick=irInicio; nav.appendChild(b);
+  } else if(state.screen==='chofer'){
+    nav.appendChild(el(`<span class="who">Hola, <b>${esc(state.chofer.nombre)}</b></span>`));
+    const b=el('<button class="back-link">Salir →</button>'); b.onclick=cerrarSesion; nav.appendChild(b);
+  } else if(state.screen==='admin'){
+    nav.appendChild(el('<span class="who">Panel <b>Administrador</b></span>'));
+    const b=el('<button class="back-link">Salir →</button>'); b.onclick=cerrarSesion; nav.appendChild(b);
+  } else if(state.screen==='jt'){
+    nav.appendChild(el('<span class="who jt-accent">Panel <b>Jefe de Tráfico</b></span>'));
+    const b=el('<button class="back-link">Salir →</button>'); b.onclick=cerrarSesion; nav.appendChild(b);
+  } else nav.appendChild(el('<span></span>'));
   return wrap;
 }
 
-function renderMsg(){
-  const m = el(`<div class="msg ${state.msg.type}">${escapeHtml(state.msg.text)}</div>`);
-  return m;
-}
+function renderMsg(){ return el(`<div class="msg ${state.msg.type}">${esc(state.msg.text)}</div>`); }
 
+/* ---- INICIO ---- */
 function renderInicio(){
-  const wrap = el(`
-    <div class="card">
-      <h2>¿Quién sos?</h2>
-      <div class="hint">Elegí tu rol para continuar.</div>
-      <div class="role-grid">
-        <button class="role-btn" id="btn-chofer">
-          <div class="icon">🚚</div>
-          <div>
-            <div class="label">Soy chofer</div>
-            <div class="desc">Cargar y ver mis viajes</div>
-          </div>
-        </button>
-        <button class="role-btn" id="btn-admin">
-          <div class="icon">📋</div>
-          <div>
-            <div class="label">Soy administrador</div>
-            <div class="desc">Ver todo, exportar, gestionar choferes</div>
-          </div>
-        </button>
-      </div>
+  const wrap=el(`<div class="card">
+    <h2>¿Quién sos?</h2>
+    <div class="hint">Elegí tu rol para continuar.</div>
+    <div class="role-grid">
+      <button class="role-btn" id="bc"><div class="icon">🚚</div><div><div class="label">Soy chofer</div><div class="desc">Cargar y ver mis viajes</div></div></button>
+      <button class="role-btn" id="bjt"><div class="icon">🔍</div><div><div class="label">Jefe de Tráfico</div><div class="desc">Aprobar o rechazar viajes pendientes</div></div></button>
+      <button class="role-btn" id="ba"><div class="icon">📋</div><div><div class="label">Soy administrador</div><div class="desc">Ver todo, exportar, gestionar choferes</div></div></button>
     </div>
-  `);
-  wrap.querySelector('#btn-chofer').onclick = irLoginChofer;
-  wrap.querySelector('#btn-admin').onclick = irLoginAdmin;
+  </div>`);
+  wrap.querySelector('#bc').onclick=irLoginChofer;
+  wrap.querySelector('#bjt').onclick=irLoginJT;
+  wrap.querySelector('#ba').onclick=irLoginAdmin;
   return wrap;
 }
 
+/* ---- LOGIN CHOFER ---- */
 function renderLoginChofer(){
-  if (state.loading && !state.choferes.length) {
-    return el(`<div class="card"><div class="empty"><span class="spinner"></span>Cargando choferes…</div></div>`);
-  }
-  if (!state.choferSeleccionado) {
-    const wrap = el(`<div class="card"><h2>Elegí tu nombre</h2><div class="hint">Tocá tu nombre de la lista.</div><div id="lista"></div></div>`);
-    const lista = wrap.querySelector('#lista');
-    if (!state.choferes.length) {
-      lista.appendChild(el(`<div class="empty">No hay choferes cargados todavía. Pedile al administrador que te agregue.</div>`));
-    }
-    state.choferes.forEach(c => {
-      const b = el(`<button class="role-btn" style="margin-bottom:10px;">
-          <div class="icon">👤</div>
-          <div><div class="label">${escapeHtml(c.nombre)}</div><div class="desc">${escapeHtml(c.patente || 'Sin patente asignada')}</div></div>
-        </button>`);
-      b.onclick = () => elegirChofer(c);
-      lista.appendChild(b);
+  if(state.loading&&!state.choferes.length)
+    return el('<div class="card"><div class="empty"><span class="spinner"></span>Cargando choferes…</div></div>');
+  if(!state.choferSeleccionado){
+    const wrap=el('<div class="card"><h2>Elegí tu nombre</h2><div class="hint">Tocá tu nombre de la lista.</div><div id="lista"></div></div>');
+    const lista=wrap.querySelector('#lista');
+    if(!state.choferes.length) lista.appendChild(el('<div class="empty">No hay choferes cargados. Pedile al administrador que te agregue.</div>'));
+    state.choferes.forEach(c=>{
+      const b=el(`<button class="role-btn" style="margin-bottom:10px;">
+        <div class="icon">👤</div>
+        <div><div class="label">${esc(c.nombre)}</div><div class="desc">${esc(c.patente||'Sin patente asignada')}</div></div>
+      </button>`);
+      b.onclick=()=>elegirChofer(c); lista.appendChild(b);
     });
     return wrap;
   }
-
-  // Pantalla de PIN
-  const wrap = el(`
-    <div class="card">
-      <h2>Hola, ${escapeHtml(state.choferSeleccionado.nombre)}</h2>
-      <div class="hint">Ingresá tu PIN de 4 dígitos.</div>
-      <div class="pin-dots">
-        ${[0,1,2,3].map(i => `<div class="dot ${state.pin.length>i?'filled':''}"></div>`).join('')}
-      </div>
-      <div class="keypad" id="keypad"></div>
-      <button class="btn ghost" id="cambiar" style="margin-top:14px;">No soy yo, elegir otro nombre</button>
-    </div>
-  `);
-  const pad = wrap.querySelector('#keypad');
-  ['1','2','3','4','5','6','7','8','9','','0','del'].forEach(k => {
-    if (k === '') { pad.appendChild(el(`<span></span>`)); return; }
-    const b = el(`<button class="${k==='del'?'del':''}">${k==='del'?'⌫':k}</button>`);
-    b.onclick = () => k === 'del' ? pinDel() : pinPress(k);
-    if (state.loading) b.disabled = true;
+  const wrap=el(`<div class="card">
+    <h2>Hola, ${esc(state.choferSeleccionado.nombre)}</h2>
+    <div class="hint">Ingresá tu PIN de 4 dígitos.</div>
+    <div class="pin-dots">${[0,1,2,3].map(i=>`<div class="dot ${state.pin.length>i?'filled':''}"></div>`).join('')}</div>
+    <div class="keypad" id="keypad"></div>
+    <button class="btn ghost" id="cambiar" style="margin-top:14px;">No soy yo, elegir otro nombre</button>
+  </div>`);
+  const pad=wrap.querySelector('#keypad');
+  ['1','2','3','4','5','6','7','8','9','','0','del'].forEach(k=>{
+    if(k===''){pad.appendChild(el('<span></span>'));return;}
+    const b=el(`<button class="${k==='del'?'del':''}">${k==='del'?'⌫':k}</button>`);
+    b.onclick=()=>k==='del'?pinDel():pinPress(k);
+    if(state.loading)b.disabled=true;
     pad.appendChild(b);
   });
-  wrap.querySelector('#cambiar').onclick = () => { clearMsg(); setState({ choferSeleccionado:null, pin:'' }); };
+  wrap.querySelector('#cambiar').onclick=()=>{clearMsg();setState({choferSeleccionado:null,pin:''});};
   return wrap;
 }
 
+/* ---- PANTALLA CHOFER ---- */
 function renderChofer(){
-  const wrap = document.createDocumentFragment();
-  const formCard = el(`
-    <div class="card">
-      <h2>Cargar viaje</h2>
-      <div class="hint">Completá los datos del viaje que acabás de hacer.</div>
-      <form id="form-viaje"></form>
-    </div>
-  `);
-  const form = formCard.querySelector('#form-viaje');
-  const hoy = new Date().toISOString().slice(0,10);
-  form.innerHTML = `
+  const wrap=document.createDocumentFragment();
+  const hoy=new Date().toISOString().slice(0,10);
+  const formCard=el(`<div class="card">
+    <h2>Cargar viaje</h2>
+    <div class="hint">Completá los datos del viaje.</div>
+    <form id="form-viaje"></form>
+  </div>`);
+  const form=formCard.querySelector('#form-viaje');
+  form.innerHTML=`
     <div class="field"><label>Fecha</label><input type="date" name="fecha" value="${hoy}" required></div>
-    <div class="field"><label>Patente / camión</label><input type="text" name="patente" placeholder="${escapeHtml(state.chofer.patente||'AB123CD')}" value="${escapeHtml(state.chofer.patente||'')}"></div>
+    <div class="field"><label>Patente / camión</label><input type="text" name="patente" value="${esc(state.chofer.patente||'')}"></div>
     <div class="row">
       <div class="field"><label>Origen</label><input type="text" name="origen" placeholder="Zárate" required></div>
       <div class="field"><label>Destino</label><input type="text" name="destino" placeholder="Rosario" required></div>
     </div>
     <div class="field"><label>Kilómetros</label><input type="number" name="km" inputmode="decimal" min="0" step="0.1" placeholder="0" required></div>
+    <div class="field">
+      <label>Tipo de viaje</label>
+      <div class="toggle-group" data-input="tipo_viaje">
+        <button type="button" class="toggle-btn active" data-val="ida">⬆ Ida</button>
+        <button type="button" class="toggle-btn" data-val="vuelta">⬇ Vuelta</button>
+      </div>
+      <input type="hidden" name="tipo_viaje" value="ida">
+    </div>
+    <div class="field">
+      <label>Tipo de carga</label>
+      <div class="toggle-group" data-input="tipo_carga">
+        <button type="button" class="toggle-btn active" data-val="general">📦 Carga general</button>
+        <button type="button" class="toggle-btn" data-val="peligrosa" data-cls="active-danger">⚠ Carga peligrosa</button>
+      </div>
+      <input type="hidden" name="tipo_carga" value="general">
+    </div>
     <div class="field"><label>Observaciones (opcional)</label><textarea name="observaciones" placeholder="Demoras, incidentes, etc."></textarea></div>
     <button class="btn" type="submit" ${state.loading?'disabled':''}>${state.loading?'<span class="spinner"></span>Guardando…':'Guardar viaje'}</button>
   `;
-  form.onsubmit = (e) => { e.preventDefault(); enviarViaje(form); };
+  setupToggles(form);
+  form.onsubmit=e=>{e.preventDefault();enviarViaje(form);};
 
-  const histCard = el(`<div class="card"><h2>Mis últimos viajes</h2><div class="hint">${state.misViajes.length} viaje(s) cargado(s) en total.</div><div id="hist"></div></div>`);
-  const hist = histCard.querySelector('#hist');
-  if (!state.misViajes.length) {
-    hist.appendChild(el(`<div class="empty">Todavía no cargaste ningún viaje.</div>`));
-  } else {
-    state.misViajes.slice(0,15).forEach(v => {
-      hist.appendChild(el(`
-        <div class="trip-card">
-          <div class="top"><span class="route">${escapeHtml(v.origen)} → ${escapeHtml(v.destino)}</span><span class="km nums">${v.km} km</span></div>
-          <div class="meta">${fmtFecha(v.fecha)} ${v.patente?('· '+escapeHtml(v.patente)):''}</div>
-          ${v.observaciones ? `<div class="obs">${escapeHtml(v.observaciones)}</div>` : ''}
-        </div>
-      `));
-    });
-  }
+  const histCard=el(`<div class="card"><h2>Mis viajes</h2><div class="hint">${state.misViajes.length} viaje(s) cargado(s).</div><div id="hist"></div></div>`);
+  const hist=histCard.querySelector('#hist');
+  if(!state.misViajes.length) hist.appendChild(el('<div class="empty">Todavía no cargaste ningún viaje.</div>'));
+  else state.misViajes.slice(0,20).forEach(v=>{
+    const kmStr=v.kmAprobados&&Number(v.kmAprobados)!==Number(v.km)
+      ?`<div class="km-row"><span class="km-aprobado">✅ ${v.kmAprobados} km aprobados</span> <span class="km-original">(declaraste: ${v.km})</span></div>`
+      :``;
+    const jtObsHtml=v.observacionJT
+      ?`<div class="jt-obs ${v.estado}">${v.estado==='rechazado'?'❌':'ℹ'} ${esc(v.observacionJT)}</div>`:'' ;
+    hist.appendChild(el(`<div class="trip-card">
+      <div class="top"><span class="route">${esc(v.origen)} → ${esc(v.destino)}</span><span class="km nums">${v.km} km</span></div>
+      <div class="meta">${fmtFecha(v.fecha)} ${v.patente?'· '+esc(v.patente):''}</div>
+      ${kmStr}
+      <div class="badges">
+        <span class="badge ${v.estado}">${{pendiente:'⏳ Pendiente',aprobado:'✅ Aprobado',rechazado:'❌ Rechazado'}[v.estado]||v.estado}</span>
+        <span class="badge ${v.tipoViaje}">${v.tipoViaje==='ida'?'⬆ Ida':'⬇ Vuelta'}</span>
+        <span class="badge ${v.tipoCarga}">${v.tipoCarga==='peligrosa'?'⚠ Peligrosa':'📦 General'}</span>
+      </div>
+      ${v.observaciones?`<div class="obs">${esc(v.observaciones)}</div>`:''}
+      ${jtObsHtml}
+    </div>`));
+  });
 
   wrap.appendChild(formCard);
   wrap.appendChild(histCard);
   return wrap;
 }
 
+/* ---- LOGIN ADMIN ---- */
 function renderLoginAdmin(){
-  if (state.adminConfigurado === null) {
-    return el(`<div class="card"><div class="empty"><span class="spinner"></span>Cargando…</div></div>`);
-  }
-  const modo = state.adminConfigurado ? 'login' : 'crear';
-  const wrap = el(`
-    <div class="card">
-      <h2>${modo==='crear' ? 'Crear contraseña de administrador' : 'Ingresar como administrador'}</h2>
-      <div class="hint">${modo==='crear' ? 'Es la primera vez que se usa el panel de administrador. Elegí una contraseña.' : 'Ingresá la contraseña configurada.'}</div>
-      <form id="form-admin">
-        <div class="field"><label>Contraseña</label><input type="text" name="password" inputmode="text" autocomplete="off" required></div>
-        ${modo==='crear' ? `<div class="field"><label>Repetir contraseña</label><input type="text" name="password2" autocomplete="off" required></div>` : ''}
-        <button class="btn" type="submit" ${state.loading?'disabled':''}>${state.loading?'<span class="spinner"></span>Procesando…':(modo==='crear'?'Crear y entrar':'Entrar')}</button>
-      </form>
-    </div>
-  `);
-  wrap.querySelector('#form-admin').onsubmit = (e) => { e.preventDefault(); enviarAdminPassword(e.target, modo); };
+  if(state.adminConfigurado===null)
+    return el('<div class="card"><div class="empty"><span class="spinner"></span>Cargando…</div></div>');
+  const modo=state.adminConfigurado?'login':'crear';
+  const wrap=el(`<div class="card">
+    <h2>${modo==='crear'?'Crear contraseña de administrador':'Ingresar como administrador'}</h2>
+    <div class="hint">${modo==='crear'?'Primera vez. Elegí una contraseña para el panel de administrador.':'Ingresá la contraseña configurada.'}</div>
+    <form id="fa">
+      <div class="field"><label>Contraseña</label><input type="text" name="password" autocomplete="off" required></div>
+      ${modo==='crear'?'<div class="field"><label>Repetir contraseña</label><input type="text" name="password2" autocomplete="off" required></div>':''}
+      <button class="btn" type="submit" ${state.loading?'disabled':''}>${state.loading?'<span class="spinner"></span>Procesando…':modo==='crear'?'Crear y entrar':'Entrar'}</button>
+    </form>
+  </div>`);
+  wrap.querySelector('#fa').onsubmit=e=>{e.preventDefault();enviarAdminPassword(e.target,modo);};
   return wrap;
 }
 
-function renderAdmin(){
-  const wrap = document.createDocumentFragment();
+/* ---- LOGIN JT ---- */
+function renderLoginJT(){
+  if(state.jtConfigurado===null)
+    return el('<div class="card"><div class="empty"><span class="spinner"></span>Cargando…</div></div>');
+  const modo=state.jtConfigurado?'login':'crear';
+  const wrap=el(`<div class="card">
+    <h2>${modo==='crear'?'Configurar Jefe de Tráfico':'Jefe de Tráfico'}</h2>
+    <div class="hint">${modo==='crear'?'Primera vez. Creá la contraseña para el Jefe de Tráfico.':'Ingresá tu contraseña.'}</div>
+    <form id="fjt">
+      <div class="field"><label>Contraseña</label><input type="text" name="password" autocomplete="off" required></div>
+      ${modo==='crear'?'<div class="field"><label>Repetir contraseña</label><input type="text" name="password2" autocomplete="off" required></div>':''}
+      <button class="btn jt" type="submit" ${state.loading?'disabled':''}>${state.loading?'<span class="spinner"></span>Procesando…':modo==='crear'?'Crear y entrar':'Entrar'}</button>
+    </form>
+  </div>`);
+  wrap.querySelector('#fjt').onsubmit=e=>{e.preventDefault();enviarJTPassword(e.target,modo);};
+  return wrap;
+}
 
-  const tabs = el(`
-    <div class="tabbar">
-      <button id="tab-viajes" class="${state.adminTab==='viajes'?'active':''}">Viajes</button>
-      <button id="tab-choferes" class="${state.adminTab==='choferes'?'active':''}">Choferes</button>
+/* ---- PANEL JT ---- */
+function renderJT(){
+  const wrap=document.createDocumentFragment();
+  const count=state.viajesPendientes.length;
+  const header=el(`<div class="card">
+    <div class="stat-row">
+      <div class="stat"><div class="num nums">${count}</div><div class="lbl">Pendientes</div></div>
+      <div class="stat"><div class="num nums" style="color:var(--good);">${'—'}</div><div class="lbl">Aprobados hoy</div></div>
+      <div class="stat"><div class="num nums" style="color:var(--bad);">${'—'}</div><div class="lbl">Rechazados hoy</div></div>
     </div>
-  `);
-  tabs.querySelector('#tab-viajes').onclick = () => setAdminTab('viajes');
-  tabs.querySelector('#tab-choferes').onclick = () => setAdminTab('choferes');
+  </div>`);
+  wrap.appendChild(header);
+
+  const listCard=el(`<div class="card">
+    <h2>Viajes pendientes${count?`<span class="pending-badge">${count}</span>`:''}</h2>
+    <div class="hint">Revisá cada viaje y aprobalo o rechazalo.</div>
+    <div id="lista-pendientes"></div>
+  </div>`);
+  const lp=listCard.querySelector('#lista-pendientes');
+  if(!count){
+    lp.appendChild(el('<div class="empty">✅ No hay viajes pendientes de aprobación.</div>'));
+  } else {
+    state.viajesPendientes.forEach(v=>{
+      const tc=el(`<div class="trip-card">
+        <div class="top"><span class="route">${esc(v.origen)} → ${esc(v.destino)}</span><span class="km nums">${v.km} km</span></div>
+        <div class="meta">${esc(v.choferNombre)} · ${esc(v.patente||'sin patente')} · ${fmtFecha(v.fecha)}</div>
+        <div class="badges" style="margin-bottom:10px;">
+          <span class="badge ${v.tipoViaje}">${v.tipoViaje==='ida'?'⬆ Ida':'⬇ Vuelta'}</span>
+          <span class="badge ${v.tipoCarga}">${v.tipoCarga==='peligrosa'?'⚠ Peligrosa':'📦 General'}</span>
+        </div>
+        ${v.observaciones?`<div class="obs" style="margin-bottom:10px;">${esc(v.observaciones)}</div>`:''}
+        <div class="row">
+          <button class="btn good small" id="apr">✅ Aprobar</button>
+          <button class="btn danger small" id="rech">❌ Rechazar</button>
+        </div>
+      </div>`);
+      tc.querySelector('#apr').onclick=()=>abrirModalAprobar(v);
+      tc.querySelector('#rech').onclick=()=>abrirModalRechazar(v);
+      lp.appendChild(tc);
+    });
+  }
+  wrap.appendChild(listCard);
+  return wrap;
+}
+
+/* ---- PANEL ADMIN ---- */
+function renderAdmin(){
+  const wrap=document.createDocumentFragment();
+  const tabs=el(`<div class="tabbar">
+    <button id="tv" class="${state.adminTab==='viajes'?'active':''}">Viajes</button>
+    <button id="tc" class="${state.adminTab==='choferes'?'active':''}">Choferes</button>
+  </div>`);
+  tabs.querySelector('#tv').onclick=()=>setAdminTab('viajes');
+  tabs.querySelector('#tc').onclick=()=>setAdminTab('choferes');
   wrap.appendChild(tabs);
-
-  if (state.adminTab === 'viajes') wrap.appendChild(renderAdminViajes());
+  if(state.adminTab==='viajes') wrap.appendChild(renderAdminViajes());
   else wrap.appendChild(renderAdminChoferes());
-
   return wrap;
 }
 
 function renderAdminViajes(){
-  const filtrados = filtrarViajes();
-  const totalKm = filtrados.reduce((a,v) => a + Number(v.km||0), 0);
-  const choferesActivos = new Set(filtrados.map(v=>v.choferId)).size;
+  const filtrados=filtrarViajes();
+  const totalKm=filtrados.reduce((a,v)=>a+Number(v.km||0),0);
+  const aprobados=filtrados.filter(v=>v.estado==='aprobado').length;
+  const pendientes=filtrados.filter(v=>v.estado==='pendiente').length;
 
-  const card = el(`
-    <div class="card">
-      <div class="stat-row">
-        <div class="stat"><div class="num nums">${filtrados.length}</div><div class="lbl">Viajes</div></div>
-        <div class="stat"><div class="num nums">${totalKm.toLocaleString('es-AR')}</div><div class="lbl">Km totales</div></div>
-        <div class="stat"><div class="num nums">${choferesActivos}</div><div class="lbl">Choferes</div></div>
-      </div>
+  const statsCard=el(`<div class="card">
+    <div class="stat-row">
+      <div class="stat"><div class="num nums">${filtrados.length}</div><div class="lbl">Total</div></div>
+      <div class="stat"><div class="num nums" style="color:var(--good);">${aprobados}</div><div class="lbl">Aprobados</div></div>
+      <div class="stat"><div class="num nums" style="color:var(--warn);">${pendientes}</div><div class="lbl">Pendientes</div></div>
     </div>
-  `);
+    <div style="margin-top:10px;text-align:center;font-family:'Barlow Condensed';font-size:14px;color:var(--muted);">
+      Total km declarados: <b style="color:var(--accent);">${totalKm.toLocaleString('es-AR')}</b>
+    </div>
+  </div>`);
 
-  const filtroCard = el(`
-    <div class="card">
-      <div class="field" style="margin-bottom:10px;"><label>Filtrar por chofer</label><select id="sel-filtro"></select></div>
-      <div class="row">
-        <button class="btn secondary small" id="btn-limpiar" style="flex:1;">Limpiar filtro</button>
-        <button class="btn small" id="btn-exportar" style="flex:1;">⬇ Exportar a Excel</button>
-      </div>
+  const filtrosCard=el(`<div class="card">
+    <div class="field" style="margin-bottom:8px;"><label>Filtrar por chofer</label><select id="sel-chofer"></select></div>
+    <div class="field" style="margin-bottom:10px;"><label>Filtrar por estado</label><select id="sel-estado">
+      <option value="todos">Todos los estados</option>
+      <option value="pendiente">⏳ Pendientes</option>
+      <option value="aprobado">✅ Aprobados</option>
+      <option value="rechazado">❌ Rechazados</option>
+    </select></div>
+    <div class="row">
+      <button class="btn secondary small" id="bl">Limpiar filtros</button>
+      <button class="btn small" id="bx">⬇ Excel</button>
     </div>
-  `);
-  const sel = filtroCard.querySelector('#sel-filtro');
-  sel.appendChild(el(`<option value="">Todos los choferes</option>`));
-  [...new Map(state.viajes.map(v=>[v.choferId,v.choferNombre])).entries()].forEach(([id,nombre]) => {
-    const o = el(`<option value="${id}">${escapeHtml(nombre)}</option>`);
-    if (id === state.filtroChofer) o.selected = true;
-    sel.appendChild(o);
+  </div>`);
+  const selC=filtrosCard.querySelector('#sel-chofer');
+  selC.appendChild(el('<option value="">Todos los choferes</option>'));
+  [...new Map(state.viajes.map(v=>[v.choferId,v.choferNombre])).entries()].forEach(([id,nombre])=>{
+    const o=el(`<option value="${id}">${esc(nombre)}</option>`);
+    if(id===state.filtroChofer)o.selected=true; selC.appendChild(o);
   });
-  sel.onchange = () => setState({ filtroChofer: sel.value });
-  filtroCard.querySelector('#btn-limpiar').onclick = () => setState({ filtroChofer:'' });
-  filtroCard.querySelector('#btn-exportar').onclick = exportarExcel;
+  selC.onchange=()=>setState({filtroChofer:selC.value});
+  const selE=filtrosCard.querySelector('#sel-estado');
+  selE.value=state.filtroEstado;
+  selE.onchange=()=>setState({filtroEstado:selE.value});
+  filtrosCard.querySelector('#bl').onclick=()=>setState({filtroChofer:'',filtroEstado:'todos'});
+  filtrosCard.querySelector('#bx').onclick=exportarExcel;
 
-  const listCard = el(`<div class="card"><h2>Registros</h2><div id="lista-viajes" style="margin-top:10px;"></div></div>`);
-  const lv = listCard.querySelector('#lista-viajes');
-  if (!filtrados.length) {
-    lv.appendChild(el(`<div class="empty">No hay viajes cargados todavía.</div>`));
-  } else {
-    filtrados.forEach(v => {
-      const tc = el(`
-        <div class="trip-card">
-          <div class="top"><span class="route">${escapeHtml(v.origen)} → ${escapeHtml(v.destino)}</span><span class="km nums">${v.km} km</span></div>
-          <div class="meta">${fmtFecha(v.fecha)} · ${escapeHtml(v.choferNombre)} ${v.patente?('· '+escapeHtml(v.patente)):''}</div>
-          ${v.observaciones ? `<div class="obs">${escapeHtml(v.observaciones)}</div>` : ''}
-          <div style="margin-top:8px;text-align:right;">
-            <button class="icon-btn" title="Eliminar">🗑</button>
-          </div>
-        </div>
-      `);
-      tc.querySelector('.icon-btn').onclick = () => adminEliminarViaje(v.id);
-      lv.appendChild(tc);
-    });
-  }
+  const listCard=el(`<div class="card"><h2>Registros</h2><div id="lv" style="margin-top:10px;"></div></div>`);
+  const lv=listCard.querySelector('#lv');
+  if(!filtrados.length) lv.appendChild(el('<div class="empty">No hay viajes para mostrar.</div>'));
+  else filtrados.forEach(v=>{
+    const kmDiferente=v.kmAprobados&&Number(v.kmAprobados)!==Number(v.km);
+    const kmHtml=v.estado==='aprobado'&&kmDiferente
+      ?`<span class="km nums" style="color:var(--good);">${v.kmAprobados} km <span style="font-size:12px;color:var(--muted);text-decoration:line-through;">${v.km}</span></span>`
+      :`<span class="km nums">${v.km} km</span>`;
+    const jtHtml=v.observacionJT?`<div class="jt-obs ${v.estado}">${esc(v.observacionJT)}</div>`:'';
+    const tc=el(`<div class="trip-card">
+      <div class="top"><span class="route">${esc(v.origen)} → ${esc(v.destino)}</span>${kmHtml}</div>
+      <div class="meta">${fmtFecha(v.fecha)} · ${esc(v.choferNombre)} ${v.patente?'· '+esc(v.patente):''}</div>
+      <div class="badges" style="margin-top:6px;">
+        <span class="badge ${v.estado}">${{pendiente:'⏳ Pendiente',aprobado:'✅ Aprobado',rechazado:'❌ Rechazado'}[v.estado]||v.estado}</span>
+        <span class="badge ${v.tipoViaje}">${v.tipoViaje==='ida'?'⬆ Ida':'⬇ Vuelta'}</span>
+        <span class="badge ${v.tipoCarga}">${v.tipoCarga==='peligrosa'?'⚠ Peligrosa':'📦 General'}</span>
+      </div>
+      ${v.observaciones?`<div class="obs">${esc(v.observaciones)}</div>`:''}
+      ${jtHtml}
+      <div style="margin-top:8px;text-align:right;"><button class="icon-btn" title="Eliminar">🗑</button></div>
+    </div>`);
+    tc.querySelector('.icon-btn').onclick=()=>adminEliminarViaje(v.id);
+    lv.appendChild(tc);
+  });
 
-  const frag = document.createDocumentFragment();
-  frag.appendChild(card);
-  frag.appendChild(filtroCard);
-  frag.appendChild(listCard);
+  const frag=document.createDocumentFragment();
+  frag.appendChild(statsCard); frag.appendChild(filtrosCard); frag.appendChild(listCard);
   return frag;
 }
 
 function renderAdminChoferes(){
-  const card = el(`
-    <div class="card">
-      <div class="row" style="align-items:center;margin-bottom:14px;">
-        <h2 style="flex:1;">Choferes</h2>
-        <button class="btn small" id="btn-nuevo" style="flex:0;">+ Agregar</button>
-      </div>
-      <div id="lista-choferes"></div>
+  const card=el(`<div class="card">
+    <div class="row" style="align-items:center;margin-bottom:14px;">
+      <h2 style="flex:1;">Choferes</h2>
+      <button class="btn small" id="bn">+ Agregar</button>
     </div>
-  `);
-  card.querySelector('#btn-nuevo').onclick = abrirModalAgregarChofer;
-  const lc = card.querySelector('#lista-choferes');
-  if (!state.choferesAdmin.length) {
-    lc.appendChild(el(`<div class="empty">No hay choferes cargados. Agregá el primero.</div>`));
-  } else {
-    state.choferesAdmin.forEach(c => {
-      const row = el(`
-        <div class="chofer-row ${c.activo?'':'inactivo'}">
-          <div>
-            <div class="name">${escapeHtml(c.nombre)}</div>
-            <div class="plate">${escapeHtml(c.patente || 'Sin patente')} ${c.activo ? '' : '· Dado de baja'}</div>
-          </div>
-          <div class="acts">
-            <button class="icon-btn" title="Editar">✎</button>
-            <button class="icon-btn" title="Resetear PIN">🔑</button>
-            <button class="icon-btn" title="${c.activo?'Dar de baja':'Reactivar'}">${c.activo?'⏸':'▶'}</button>
-            <button class="icon-btn" title="Eliminar">🗑</button>
-          </div>
-        </div>
-      `);
-      const [editBtn, pinBtn, toggleBtn, delBtn] = row.querySelectorAll('.icon-btn');
-      editBtn.onclick = () => abrirModalEditarChofer(c);
-      pinBtn.onclick = () => adminResetearPin(c);
-      toggleBtn.onclick = () => adminToggleChofer(c);
-      delBtn.onclick = () => adminEliminarChofer(c);
-      lc.appendChild(row);
-    });
-  }
+    <div id="lc"></div>
+  </div>`);
+  card.querySelector('#bn').onclick=abrirModalAgregarChofer;
+  const lc=card.querySelector('#lc');
+  if(!state.choferesAdmin.length) lc.appendChild(el('<div class="empty">No hay choferes. Agregá el primero.</div>'));
+  else state.choferesAdmin.forEach(c=>{
+    const row=el(`<div class="chofer-row ${c.activo?'':'inactivo'}">
+      <div>
+        <div class="name">${esc(c.nombre)}</div>
+        <div class="plate">${esc(c.patente||'Sin patente')} ${c.activo?'':'· Dado de baja'}</div>
+      </div>
+      <div class="acts">
+        <button class="icon-btn" title="Editar">✎</button>
+        <button class="icon-btn" title="Resetear PIN">🔑</button>
+        <button class="icon-btn" title="${c.activo?'Dar de baja':'Reactivar'}">${c.activo?'⏸':'▶'}</button>
+        <button class="icon-btn" title="Eliminar">🗑</button>
+      </div>
+    </div>`);
+    const [eB,pB,tB,dB]=row.querySelectorAll('.icon-btn');
+    eB.onclick=()=>abrirModalEditarChofer(c);
+    pB.onclick=()=>adminResetearPin(c);
+    tB.onclick=()=>adminToggleChofer(c);
+    dB.onclick=()=>adminEliminarChofer(c);
+    lc.appendChild(row);
+  });
   return card;
 }
 
+/* ---- MODAL ---- */
 function renderModal(){
-  const bg = el(`<div class="modal-bg"></div>`);
-  const modal = el(`<div class="modal"><h2 style="margin-bottom:14px;">${escapeHtml(state.modal.title)}</h2><div id="m-body"></div><div class="row" id="m-actions" style="margin-top:18px;"></div></div>`);
-  modal.querySelector('#m-body').innerHTML = state.modal.body;
-  const actionsWrap = modal.querySelector('#m-actions');
-  state.modal.actions.forEach(a => {
-    const b = el(`<button class="btn ${a.cls}">${escapeHtml(a.label)}</button>`);
-    b.onclick = a.onClick;
-    actionsWrap.appendChild(b);
+  const bg=el('<div class="modal-bg"></div>');
+  const modal=el(`<div class="modal"><h2 style="margin-bottom:14px;">${esc(state.modal.title)}</h2><div id="mb"></div><div class="row" id="ma" style="margin-top:18px;"></div></div>`);
+  modal.querySelector('#mb').innerHTML=state.modal.body;
+  const ma=modal.querySelector('#ma');
+  state.modal.actions.forEach(a=>{
+    const b=el(`<button class="btn ${a.cls}">${esc(a.label)}</button>`);
+    b.onclick=a.onClick; ma.appendChild(b);
   });
   bg.appendChild(modal);
-  bg.onclick = (e) => { if (e.target === bg) cerrarModal(); };
+  bg.onclick=e=>{if(e.target===bg)cerrarModal();};
   return bg;
 }
 
-/* =======================================================================
-   INICIO
-   ======================================================================= */
+/* ============================================================
+   ARRANCAR
+   ============================================================ */
 render();
 </script>
 </body>
