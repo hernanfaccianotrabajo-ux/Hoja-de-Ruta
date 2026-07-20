@@ -206,7 +206,13 @@ async function sha256(text){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
-function fmtFecha(f){ if(!f)return''; const [y,m,d]=String(f).split('-'); return d&&m?`${d}/${m}/${y}`:f; }
+function fmtFecha(f){
+  if(!f) return '';
+  // Tomar solo los primeros 10 caracteres (yyyy-MM-dd) por si viene con hora o como objeto
+  const s = String(f).slice(0,10);
+  const [y,m,d] = s.split('-');
+  return d&&m&&y ? `${d}/${m}/${y}` : s;
+}
 function fmtDia(f){
   if(!f)return'';
   const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -230,11 +236,24 @@ function periodoDesdeKey(key){
   return {desde, hasta};
 }
 
+function fechaLimpia(f){
+  // Extrae yyyy-MM-dd de cualquier formato (con hora, con slash, etc.)
+  if(!f) return '';
+  const s=String(f);
+  // Formato dd/mm/yyyy → convertir a yyyy-MM-dd
+  if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){
+    const [d,m,y]=s.slice(0,10).split('/');
+    return `${y}-${m}-${d}`;
+  }
+  // yyyy-MM-dd (con o sin hora)
+  return s.slice(0,10);
+}
+
 function viajeEnPeriodo(v, key){
   if(!key||key==='todos') return true;
   const p=periodoDesdeKey(key);
   if(!p) return true;
-  const f=v.fecha; // yyyy-MM-dd
+  const f=fechaLimpia(v.fecha);
   return f>=p.desde && f<=p.hasta;
 }
 
@@ -244,11 +263,11 @@ function opcionesMesesFacturacion(viajes){
   const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const keys=new Set();
-  // Desde los viajes existentes
   viajes.forEach(v=>{
-    if(!v.fecha) return;
-    const [y,m,d]=v.fecha.split('-').map(Number);
-    // Un viaje del día 1-20 pertenece al mes M, del 21-31 al mes M+1
+    const f=fechaLimpia(v.fecha);
+    if(!f) return;
+    const [y,m,d]=f.split('-').map(Number);
+    if(!y||!m||!d) return;
     if(d>=21){
       const mesFactura=m===12?1:m+1;
       const anioFactura=m===12?y+1:y;
@@ -257,7 +276,6 @@ function opcionesMesesFacturacion(viajes){
       keys.add(`${y}-${String(m).padStart(2,'0')}`);
     }
   });
-  // Agregar los últimos 6 meses siempre
   const hoy=new Date();
   for(let i=0;i<6;i++){
     const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
