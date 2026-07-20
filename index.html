@@ -206,76 +206,73 @@ async function sha256(text){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
+// El backend ahora siempre devuelve fechas como dd/MM/yyyy.
+// fmtFecha solo la muestra tal cual (o convierte si viene en otro formato como fallback).
 function fmtFecha(f){
   if(!f) return '';
-  // Tomar solo los primeros 10 caracteres (yyyy-MM-dd) por si viene con hora o como objeto
-  const s = String(f).slice(0,10);
-  const [y,m,d] = s.split('-');
-  return d&&m&&y ? `${d}/${m}/${y}` : s;
-}
-function fmtDia(f){
-  if(!f)return'';
-  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const [y,m,d]=String(f).split('-');
-  if(!y||!m||!d)return'';
-  const dt=new Date(Number(y),Number(m)-1,Number(d));
-  return dias[dt.getDay()]||'';
+  const s=String(f).trim();
+  // Ya viene como dd/MM/yyyy → mostrar directo
+  if(/^\d{2}\/\d{2}\/\d{4}/.test(s)) return s.slice(0,10);
+  // Fallback: viene como yyyy-MM-dd
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)){
+    const [y,m,d]=s.slice(0,10).split('-');
+    return `${d}/${m}/${y}`;
+  }
+  return s;
 }
 
-// Período de facturación: del 21 del mes anterior al 20 del mes elegido.
-// key tiene formato "YYYY-MM" (año y mes del período de facturación).
-function periodoDesdeKey(key){
-  if(!key||key==='todos') return null;
-  const [y,m]=key.split('-').map(Number);
-  // Inicio: 21 del mes anterior
-  const mesAnterior=m===1?12:m-1;
-  const anioAnterior=m===1?y-1:y;
-  const desde=`${anioAnterior}-${String(mesAnterior).padStart(2,'0')}-21`;
-  // Fin: 20 del mes elegido
-  const hasta=`${y}-${String(m).padStart(2,'0')}-20`;
-  return {desde, hasta};
-}
-
-function fechaLimpia(f){
-  // Extrae yyyy-MM-dd de cualquier formato (con hora, con slash, etc.)
+// Convierte cualquier formato de fecha a yyyy-MM-dd para poder comparar (uso interno del filtro).
+function fechaAYMD(f){
   if(!f) return '';
-  const s=String(f);
-  // Formato dd/mm/yyyy → convertir a yyyy-MM-dd
+  const s=String(f).trim();
   if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){
     const [d,m,y]=s.slice(0,10).split('/');
     return `${y}-${m}-${d}`;
   }
-  // yyyy-MM-dd (con o sin hora)
-  return s.slice(0,10);
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  return '';
+}
+
+// Período de facturación: del 21 del mes anterior al 20 del mes elegido.
+// key tiene formato "YYYY-MM"
+function periodoDesdeKey(key){
+  if(!key||key==='todos') return null;
+  const [y,m]=key.split('-').map(Number);
+  const mesAnt=m===1?12:m-1;
+  const anioAnt=m===1?y-1:y;
+  return {
+    desde:`${anioAnt}-${String(mesAnt).padStart(2,'0')}-21`,
+    hasta:`${y}-${String(m).padStart(2,'0')}-20`
+  };
 }
 
 function viajeEnPeriodo(v, key){
   if(!key||key==='todos') return true;
   const p=periodoDesdeKey(key);
   if(!p) return true;
-  const f=fechaLimpia(v.fecha);
+  const f=fechaAYMD(v.fecha); // convertir dd/MM/yyyy → yyyy-MM-dd para comparar
   return f>=p.desde && f<=p.hasta;
 }
 
-// Genera opciones de meses de facturación basadas en los viajes disponibles
-// más los últimos 6 meses para que siempre haya opciones aunque no haya viajes.
 function opcionesMesesFacturacion(viajes){
   const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const keys=new Set();
   viajes.forEach(v=>{
-    const f=fechaLimpia(v.fecha);
+    const f=fechaAYMD(v.fecha);
     if(!f) return;
     const [y,m,d]=f.split('-').map(Number);
     if(!y||!m||!d) return;
+    // Viajes del 21 al 31 pertenecen al mes siguiente de facturación
     if(d>=21){
-      const mesFactura=m===12?1:m+1;
-      const anioFactura=m===12?y+1:y;
-      keys.add(`${anioFactura}-${String(mesFactura).padStart(2,'0')}`);
+      const mesF=m===12?1:m+1;
+      const anioF=m===12?y+1:y;
+      keys.add(`${anioF}-${String(mesF).padStart(2,'0')}`);
     } else {
       keys.add(`${y}-${String(m).padStart(2,'0')}`);
     }
   });
+  // Siempre agregar los últimos 6 meses
   const hoy=new Date();
   for(let i=0;i<6;i++){
     const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
@@ -290,8 +287,10 @@ function opcionesMesesFacturacion(viajes){
 function fmtPeriodo(key){
   const p=periodoDesdeKey(key);
   if(!p) return '';
-  const [fd,fm,fy]=p.desde.split('-'); const [td,tm,ty]=p.hasta.split('-');
-  return `${fd}/${fm}/${fy} al ${td}/${tm}/${ty}`;
+  // Convertir yyyy-MM-dd a dd/MM/yyyy para mostrar
+  const [yd,ym,ydi]=p.desde.split('-');
+  const [td,tm,tdi]=p.hasta.split('-');
+  return `${ydi}/${ym}/${yd} al ${tdi}/${tm}/${td}`;
 }
 function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
