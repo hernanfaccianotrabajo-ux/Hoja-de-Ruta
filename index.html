@@ -206,31 +206,38 @@ async function sha256(text){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
-// El backend ahora siempre devuelve fechas como dd/MM/yyyy.
-// fmtFecha solo la muestra tal cual (o convierte si viene en otro formato como fallback).
-function fmtFecha(f){
-  if(!f) return '';
-  const s=String(f).trim();
-  // Ya viene como dd/MM/yyyy → mostrar directo
-  if(/^\d{2}\/\d{2}\/\d{4}/.test(s)) return s.slice(0,10);
-  // Fallback: viene como yyyy-MM-dd
-  if(/^\d{4}-\d{2}-\d{2}/.test(s)){
-    const [y,m,d]=s.slice(0,10).split('-');
-    return `${d}/${m}/${y}`;
+// Tabla de meses en inglés para parsear el formato "Tue Jul 14 2026"
+const _MESES_EN = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
+                   Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+
+// Extrae {d, m, y} de cualquier formato de fecha posible
+function _parseFecha(f){
+  if(!f) return null;
+  const s = String(f).trim();
+  // dd/MM/yyyy
+  if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){
+    const p=s.slice(0,10).split('/'); return {d:p[0],m:p[1],y:p[2]};
   }
-  return s;
+  // yyyy-MM-dd (con o sin hora ISO)
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)){
+    const p=s.slice(0,10).split('-'); return {d:p[2],m:p[1],y:p[0]};
+  }
+  // "Tue Jul 14 2026 ..." o "Jul 14 2026"
+  const mx=s.match(/\b([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})/);
+  if(mx && _MESES_EN[mx[1]]){
+    return {d:mx[2].padStart(2,'0'), m:_MESES_EN[mx[1]], y:mx[3]};
+  }
+  return null;
 }
 
-// Convierte cualquier formato de fecha a yyyy-MM-dd para poder comparar (uso interno del filtro).
+function fmtFecha(f){
+  const p=_parseFecha(f);
+  return p ? `${p.d}/${p.m}/${p.y}` : String(f||'').slice(0,10);
+}
+
 function fechaAYMD(f){
-  if(!f) return '';
-  const s=String(f).trim();
-  if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){
-    const [d,m,y]=s.slice(0,10).split('/');
-    return `${y}-${m}-${d}`;
-  }
-  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
-  return '';
+  const p=_parseFecha(f);
+  return p ? `${p.y}-${p.m}-${p.d}` : '';
 }
 
 // Período de facturación: del 21 del mes anterior al 20 del mes elegido.
