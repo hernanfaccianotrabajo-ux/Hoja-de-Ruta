@@ -129,6 +129,22 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
   display:inline-block;animation:spin .7s linear infinite;vertical-align:-3px;margin-right:8px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:28px 10px;}
+/* Tabla de viajes estilo planilla */
+.trip-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px;border-radius:10px;border:1px solid var(--border);}
+.trip-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px;}
+.trip-table th{background:var(--surface-solid);color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;padding:10px 10px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;}
+.trip-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text);}
+.trip-table tr:last-child td{border-bottom:none;}
+.trip-table tr:hover td{background:rgba(255,255,255,.03);}
+.trip-table .col-km{font-family:'Barlow Condensed';font-weight:800;font-size:15px;color:var(--accent);white-space:nowrap;text-align:right;}
+.trip-table .col-km.aprobado{color:var(--good);}
+.trip-table .col-fecha{white-space:nowrap;font-size:12px;}
+.trip-table .col-dia{white-space:nowrap;font-size:11px;color:var(--muted);text-transform:capitalize;}
+.trip-table .col-lugar{font-family:'Barlow Condensed';font-weight:700;font-size:14px;}
+.trip-table .col-estado{white-space:nowrap;}
+.trip-table .col-obs{font-size:11px;color:var(--muted);max-width:140px;}
+.trip-table .col-acc{text-align:center;white-space:nowrap;}
+.trip-table .km-orig{font-size:10px;color:var(--muted);text-decoration:line-through;display:block;}
 footer{text-align:center;color:#3e5470;font-size:11px;padding:18px 20px 0;}
 /* JT panel pending counter */
 .pending-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--warn);color:#1a1a00;
@@ -191,6 +207,14 @@ async function sha256(text){
 }
 function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
 function fmtFecha(f){ if(!f)return''; const [y,m,d]=String(f).split('-'); return d&&m?`${d}/${m}/${y}`:f; }
+function fmtDia(f){
+  if(!f)return'';
+  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const [y,m,d]=String(f).split('-');
+  if(!y||!m||!d)return'';
+  const dt=new Date(Number(y),Number(m)-1,Number(d));
+  return dias[dt.getDay()]||'';
+}
 function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* ============================================================
@@ -249,6 +273,28 @@ async function cargarMisViajes(){
   try{ const d=await api('misViajes',{choferId:state.chofer.id}); setState({misViajes:d.viajes}); }
   catch(e){ showMsg('error',e.message); }
 }
+function confirmarEliminarViajeChofer(v) {
+  state.modal = {
+    title: '¿Eliminar este viaje?',
+    body: `<p style="color:var(--muted);font-size:14px;">
+      Vas a borrar el viaje <b style="color:var(--text)">${esc(v.origen)} → ${esc(v.destino)}</b> del ${esc(fmtFecha(v.fecha))}.<br><br>
+      Una vez eliminado podés volver a cargarlo corregido.
+    </p>`,
+    actions: [
+      { label: 'Cancelar', cls: 'secondary', onClick: cerrarModal },
+      { label: '🗑 Eliminar', cls: 'danger', onClick: async () => {
+        cerrarModal();
+        await withLoading(async () => {
+          await api('eliminarViajeChofer', { choferId: state.chofer.id, viajeId: v.id });
+          showMsg('ok', 'Viaje eliminado. Ya podés cargarlo de nuevo correctamente.');
+          await cargarMisViajes();
+        });
+      }},
+    ]
+  };
+  render();
+}
+
 async function enviarViaje(form){
   clearMsg();
   const fd=new FormData(form);
@@ -653,25 +699,47 @@ function renderChofer(){
   const histCard=el(`<div class="card"><h2>Mis viajes</h2><div class="hint">${state.misViajes.length} viaje(s) cargado(s).</div><div id="hist"></div></div>`);
   const hist=histCard.querySelector('#hist');
   if(!state.misViajes.length) hist.appendChild(el('<div class="empty">Todavía no cargaste ningún viaje.</div>'));
-  else state.misViajes.slice(0,20).forEach(v=>{
-    const kmStr=v.kmAprobados&&Number(v.kmAprobados)!==Number(v.km)
-      ?`<div class="km-row"><span class="km-aprobado">✅ ${v.kmAprobados} km aprobados</span> <span class="km-original">(declaraste: ${v.km})</span></div>`
-      :``;
-    const jtObsHtml=v.observacionJT
-      ?`<div class="jt-obs ${v.estado}">${v.estado==='rechazado'?'❌':'ℹ'} ${esc(v.observacionJT)}</div>`:'' ;
-    hist.appendChild(el(`<div class="trip-card">
-      <div class="top"><span class="route">${esc(v.origen)} → ${esc(v.destino)}</span><span class="km nums">${v.km} km</span></div>
-      <div class="meta">${fmtFecha(v.fecha)} ${v.patente?'· '+esc(v.patente):''}</div>
-      ${kmStr}
-      <div class="badges">
-        <span class="badge ${v.estado}">${{pendiente:'⏳ Pendiente',aprobado:'✅ Aprobado',rechazado:'❌ Rechazado'}[v.estado]||v.estado}</span>
-        <span class="badge ${v.tipoViaje}">${v.tipoViaje==='ida'?'⬆ Ida':'⬇ Vuelta'}</span>
-        <span class="badge ${v.tipoCarga}">${v.tipoCarga==='peligrosa'?'⚠ Peligrosa':'📦 General'}</span>
-      </div>
-      ${v.observaciones?`<div class="obs">${esc(v.observaciones)}</div>`:''}
-      ${jtObsHtml}
-    </div>`));
-  });
+  else {
+    const wrap=el('<div class="trip-table-wrap"></div>');
+    const tbl=el(`<table class="trip-table">
+      <thead><tr>
+        <th>Fecha</th><th>Día</th><th>Sale de</th><th>Llega a</th>
+        <th style="text-align:right;">Km.</th><th>Estado</th><th></th>
+      </tr></thead>
+      <tbody id="tbody-chofer"></tbody>
+    </table>`);
+    const tbody=tbl.querySelector('#tbody-chofer');
+    state.misViajes.slice(0,20).forEach(v=>{
+      const puedeEliminar=v.estado!=='aprobado';
+      const kmDif=v.kmAprobados&&Number(v.kmAprobados)!==Number(v.km);
+      const kmCell=v.estado==='aprobado'&&kmDif
+        ?`<span class="col-km aprobado">${v.kmAprobados}<span class="km-orig">${v.km}</span></span>`
+        :`<span class="col-km">${v.km}</span>`;
+      const estadoBadge=`<span class="badge ${v.estado}">${
+        {pendiente:'⏳ Pend.',aprobado:'✅ Aprob.',rechazado:'❌ Rech.'}[v.estado]||v.estado
+      }</span>`;
+      // Observación JT como tooltip visible si está rechazado
+      const jtRow=v.observacionJT&&v.estado==='rechazado'
+        ?`<tr><td colspan="7" style="padding:4px 10px 8px;font-size:11px;color:#ff9999;">❌ ${esc(v.observacionJT)}</td></tr>`:'';
+      const obsExtra=v.observaciones
+        ?`<tr><td colspan="7" style="padding:0 10px 6px;font-size:11px;color:var(--muted);">💬 ${esc(v.observaciones)}</td></tr>`:'';
+      const tr=el(`<tr>
+        <td class="col-fecha">${esc(fmtFecha(v.fecha))}</td>
+        <td class="col-dia">${fmtDia(v.fecha)}</td>
+        <td class="col-lugar">${esc(v.origen)}</td>
+        <td class="col-lugar">${esc(v.destino)}</td>
+        <td class="col-km${v.estado==='aprobado'&&kmDif?' aprobado':''}" style="text-align:right;">${kmCell}</td>
+        <td class="col-estado">${estadoBadge}</td>
+        <td class="col-acc">${puedeEliminar?'<button class="icon-btn" title="Eliminar">🗑</button>':''}</td>
+      </tr>`);
+      if(puedeEliminar) tr.querySelector('.icon-btn').onclick=()=>confirmarEliminarViajeChofer(v);
+      tbody.appendChild(tr);
+      if(jtRow) tbody.appendChild(el(jtRow));
+      if(obsExtra) tbody.appendChild(el(obsExtra));
+    });
+    wrap.appendChild(tbl);
+    hist.appendChild(wrap);
+  }
 
   wrap.appendChild(formCard);
   wrap.appendChild(histCard);
@@ -820,27 +888,54 @@ function renderAdminViajes(){
   const listCard=el(`<div class="card"><h2>Registros</h2><div id="lv" style="margin-top:10px;"></div></div>`);
   const lv=listCard.querySelector('#lv');
   if(!filtrados.length) lv.appendChild(el('<div class="empty">No hay viajes para mostrar.</div>'));
-  else filtrados.forEach(v=>{
-    const kmDiferente=v.kmAprobados&&Number(v.kmAprobados)!==Number(v.km);
-    const kmHtml=v.estado==='aprobado'&&kmDiferente
-      ?`<span class="km nums" style="color:var(--good);">${v.kmAprobados} km <span style="font-size:12px;color:var(--muted);text-decoration:line-through;">${v.km}</span></span>`
-      :`<span class="km nums">${v.km} km</span>`;
-    const jtHtml=v.observacionJT?`<div class="jt-obs ${v.estado}">${esc(v.observacionJT)}</div>`:'';
-    const tc=el(`<div class="trip-card">
-      <div class="top"><span class="route">${esc(v.origen)} → ${esc(v.destino)}</span>${kmHtml}</div>
-      <div class="meta">${fmtFecha(v.fecha)} · ${esc(v.choferNombre)} ${v.patente?'· '+esc(v.patente):''}</div>
-      <div class="badges" style="margin-top:6px;">
-        <span class="badge ${v.estado}">${{pendiente:'⏳ Pendiente',aprobado:'✅ Aprobado',rechazado:'❌ Rechazado'}[v.estado]||v.estado}</span>
-        <span class="badge ${v.tipoViaje}">${v.tipoViaje==='ida'?'⬆ Ida':'⬇ Vuelta'}</span>
-        <span class="badge ${v.tipoCarga}">${v.tipoCarga==='peligrosa'?'⚠ Peligrosa':'📦 General'}</span>
-      </div>
-      ${v.observaciones?`<div class="obs">${esc(v.observaciones)}</div>`:''}
-      ${jtHtml}
-      <div style="margin-top:8px;text-align:right;"><button class="icon-btn" title="Eliminar">🗑</button></div>
-    </div>`);
-    tc.querySelector('.icon-btn').onclick=()=>adminEliminarViaje(v.id);
-    lv.appendChild(tc);
-  });
+  else {
+    const wrap=el('<div class="trip-table-wrap"></div>');
+    const tbl=el(`<table class="trip-table">
+      <thead><tr>
+        <th>Fecha</th><th>Día</th><th>Sale de</th><th>Llega a</th>
+        <th>Chofer</th><th>Patente</th>
+        <th style="text-align:right;">Km. decl.</th><th style="text-align:right;">Km. aprobados</th>
+        <th>Estado</th><th>Tipo</th><th></th>
+      </tr></thead>
+      <tbody id="tbody-admin"></tbody>
+    </table>`);
+    const tbody=tbl.querySelector('#tbody-admin');
+    filtrados.forEach(v=>{
+      const kmDif=v.kmAprobados&&Number(v.kmAprobados)!==Number(v.km);
+      const estadoBadge=`<span class="badge ${v.estado}">${
+        {pendiente:'⏳ Pend.',aprobado:'✅ Aprob.',rechazado:'❌ Rech.'}[v.estado]||v.estado
+      }</span>`;
+      const tipoBadges=`<span class="badge ${v.tipoViaje}" style="font-size:10px;">${v.tipoViaje==='ida'?'⬆':'⬇'}</span>
+        <span class="badge ${v.tipoCarga}" style="font-size:10px;">${v.tipoCarga==='peligrosa'?'⚠':'📦'}</span>`;
+      const tr=el(`<tr>
+        <td class="col-fecha">${esc(fmtFecha(v.fecha))}</td>
+        <td class="col-dia">${fmtDia(v.fecha)}</td>
+        <td class="col-lugar">${esc(v.origen)}</td>
+        <td class="col-lugar">${esc(v.destino)}</td>
+        <td style="font-size:12px;">${esc(v.choferNombre)}</td>
+        <td style="font-size:11px;color:var(--muted);">${esc(v.patente||'—')}</td>
+        <td class="col-km" style="text-align:right;">${v.km}</td>
+        <td style="text-align:right;font-family:'Barlow Condensed';font-weight:800;font-size:15px;color:${v.kmAprobados?'var(--good)':'var(--muted)'};">${
+          v.kmAprobados?v.kmAprobados:'—'
+        }</td>
+        <td class="col-estado">${estadoBadge}</td>
+        <td style="white-space:nowrap;">${tipoBadges}</td>
+        <td class="col-acc"><button class="icon-btn" title="Eliminar">🗑</button></td>
+      </tr>`);
+      tr.querySelector('.icon-btn').onclick=()=>adminEliminarViaje(v.id);
+      tbody.appendChild(tr);
+      // Fila extra si hay obs del JT o del chofer
+      const extras=[];
+      if(v.observacionJT) extras.push(`<span style="color:${v.estado==='rechazado'?'#ff9999':'var(--good)'};">JT: ${esc(v.observacionJT)}</span>`);
+      if(v.observaciones) extras.push(`💬 ${esc(v.observaciones)}`);
+      if(extras.length){
+        const extr=el(`<tr><td colspan="11" style="padding:2px 10px 8px;font-size:11px;color:var(--muted);">${extras.join(' &nbsp;·&nbsp; ')}</td></tr>`);
+        tbody.appendChild(extr);
+      }
+    });
+    wrap.appendChild(tbl);
+    lv.appendChild(wrap);
+  }
 
   const frag=document.createDocumentFragment();
   frag.appendChild(statsCard); frag.appendChild(filtrosCard); frag.appendChild(listCard);
