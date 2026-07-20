@@ -166,7 +166,7 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzaHXOZglNNJFRT
 const state = {
   screen:'inicio',
   // chofer
-  choferes:[], choferSeleccionado:null, pin:'', chofer:null, misViajes:[],
+  choferes:[], choferSeleccionado:null, pin:'', chofer:null, misViajes:[], filtroMesChofer:'todos',
   // admin
   adminToken:null, adminConfigurado:null, adminTab:'viajes',
   viajes:[], choferesAdmin:[], filtroChofer:'', filtroEstado:'todos',
@@ -214,6 +214,66 @@ function fmtDia(f){
   if(!y||!m||!d)return'';
   const dt=new Date(Number(y),Number(m)-1,Number(d));
   return dias[dt.getDay()]||'';
+}
+
+// Período de facturación: del 21 del mes anterior al 20 del mes elegido.
+// key tiene formato "YYYY-MM" (año y mes del período de facturación).
+function periodoDesdeKey(key){
+  if(!key||key==='todos') return null;
+  const [y,m]=key.split('-').map(Number);
+  // Inicio: 21 del mes anterior
+  const mesAnterior=m===1?12:m-1;
+  const anioAnterior=m===1?y-1:y;
+  const desde=`${anioAnterior}-${String(mesAnterior).padStart(2,'0')}-21`;
+  // Fin: 20 del mes elegido
+  const hasta=`${y}-${String(m).padStart(2,'0')}-20`;
+  return {desde, hasta};
+}
+
+function viajeEnPeriodo(v, key){
+  if(!key||key==='todos') return true;
+  const p=periodoDesdeKey(key);
+  if(!p) return true;
+  const f=v.fecha; // yyyy-MM-dd
+  return f>=p.desde && f<=p.hasta;
+}
+
+// Genera opciones de meses de facturación basadas en los viajes disponibles
+// más los últimos 6 meses para que siempre haya opciones aunque no haya viajes.
+function opcionesMesesFacturacion(viajes){
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const keys=new Set();
+  // Desde los viajes existentes
+  viajes.forEach(v=>{
+    if(!v.fecha) return;
+    const [y,m,d]=v.fecha.split('-').map(Number);
+    // Un viaje del día 1-20 pertenece al mes M, del 21-31 al mes M+1
+    if(d>=21){
+      const mesFactura=m===12?1:m+1;
+      const anioFactura=m===12?y+1:y;
+      keys.add(`${anioFactura}-${String(mesFactura).padStart(2,'0')}`);
+    } else {
+      keys.add(`${y}-${String(m).padStart(2,'0')}`);
+    }
+  });
+  // Agregar los últimos 6 meses siempre
+  const hoy=new Date();
+  for(let i=0;i<6;i++){
+    const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
+    keys.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  return [...keys].sort().reverse().map(k=>{
+    const [y,m]=k.split('-').map(Number);
+    return {key:k, label:`${meses[m-1]} ${y}`};
+  });
+}
+
+function fmtPeriodo(key){
+  const p=periodoDesdeKey(key);
+  if(!p) return '';
+  const [fd,fm,fy]=p.desde.split('-'); const [td,tm,ty]=p.hasta.split('-');
+  return `${fd}/${fm}/${fy} al ${td}/${tm}/${ty}`;
 }
 function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -696,20 +756,59 @@ function renderChofer(){
   setupToggles(form);
   form.onsubmit=e=>{e.preventDefault();enviarViaje(form);};
 
-  const histCard=el(`<div class="card"><h2>Mis viajes</h2><div class="hint">${state.misViajes.length} viaje(s) cargado(s).</div><div id="hist"></div></div>`);
+  const opciones=opcionesMesesFacturacion(state.misViajes);
+  const viajesFiltrados=state.misViajes.filter(v=>viajeEnPeriodo(v,state.filtroMesChofer));
+  const totalKmFiltrados=viajesFiltrados.reduce((a,v)=>a+Number(v.kmAprobados||v.km||0),0);
+  const periodoLabel=state.filtroMesChofer!=='todos'?fmtPeriodo(state.filtroMesChofer):'';
+
+  const histCard=el(`<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <h2>Mis viajes</h2>
+      <span style="font-family:'Barlow Condensed';font-size:22px;font-weight:800;color:var(--accent);">${totalKmFiltrados.toLocaleString('es-AR')} km</span>
+    </div>
+    ${periodoLabel?`<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">📅 Período: ${periodoLabel}</div>`:''}
+    <div class="field" style="margin-bottom:12px;">
+      <label>Mes de facturación</label>
+      <select id="sel-mes-chofer"></select>
+    </div>
+    <div id="hist"></div>
+  </div>`);
+
+  // Poblar el selector de meses
+  const selMes=histCard.querySelector('#sel-mes-chofer');
+  const optTodos=el('<option value="todos">Todos los viajes</option>');
+  if(state.filtroMesChofer==='todos') optTodos.selected=true;
+  selMes.appendChild(optTodos);
+  opciones.forEach(o=>{
+    const opt=el(`<option value="${o.key}">${esc(o.label)}</option>`);
+    if(o.key===state.filtroMesChofer) opt.selected=true;
+    selMes.appendChild(opt);
+  });
+  selMes.onchange=()=>setState({filtroMesChofer:selMes.value});
+
   const hist=histCard.querySelector('#hist');
-  if(!state.misViajes.length) hist.appendChild(el('<div class="empty">Todavía no cargaste ningún viaje.</div>'));
-  else {
+  if(!state.misViajes.length){
+    hist.appendChild(el('<div class="empty">Todavía no cargaste ningún viaje.</div>'));
+  } else if(!viajesFiltrados.length){
+    hist.appendChild(el('<div class="empty">No hay viajes en este período.</div>'));
+  } else {
     const wrap=el('<div class="trip-table-wrap"></div>');
     const tbl=el(`<table class="trip-table">
       <thead><tr>
-        <th>Fecha</th><th>Día</th><th>Sale de</th><th>Llega a</th>
+        <th>Fecha</th><th>Sale de</th><th>Llega a</th>
         <th style="text-align:right;">Km.</th><th>Estado</th><th></th>
       </tr></thead>
       <tbody id="tbody-chofer"></tbody>
+      <tfoot>
+        <tr style="border-top:2px solid var(--border);">
+          <td colspan="3" style="padding:10px;font-size:12px;color:var(--muted);font-weight:600;">TOTAL DEL PERÍODO</td>
+          <td style="padding:10px;text-align:right;font-family:'Barlow Condensed';font-weight:800;font-size:17px;color:var(--accent);">${totalKmFiltrados.toLocaleString('es-AR')}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
     </table>`);
     const tbody=tbl.querySelector('#tbody-chofer');
-    state.misViajes.slice(0,20).forEach(v=>{
+    viajesFiltrados.forEach(v=>{
       const puedeEliminar=v.estado!=='aprobado';
       const kmDif=v.kmAprobados&&Number(v.kmAprobados)!==Number(v.km);
       const kmCell=v.estado==='aprobado'&&kmDif
@@ -718,14 +817,12 @@ function renderChofer(){
       const estadoBadge=`<span class="badge ${v.estado}">${
         {pendiente:'⏳ Pend.',aprobado:'✅ Aprob.',rechazado:'❌ Rech.'}[v.estado]||v.estado
       }</span>`;
-      // Observación JT como tooltip visible si está rechazado
       const jtRow=v.observacionJT&&v.estado==='rechazado'
-        ?`<tr><td colspan="7" style="padding:4px 10px 8px;font-size:11px;color:#ff9999;">❌ ${esc(v.observacionJT)}</td></tr>`:'';
+        ?`<tr><td colspan="6" style="padding:4px 10px 8px;font-size:11px;color:#ff9999;">❌ ${esc(v.observacionJT)}</td></tr>`:'';
       const obsExtra=v.observaciones
-        ?`<tr><td colspan="7" style="padding:0 10px 6px;font-size:11px;color:var(--muted);">💬 ${esc(v.observaciones)}</td></tr>`:'';
+        ?`<tr><td colspan="6" style="padding:0 10px 6px;font-size:11px;color:var(--muted);">💬 ${esc(v.observaciones)}</td></tr>`:'';
       const tr=el(`<tr>
         <td class="col-fecha">${esc(fmtFecha(v.fecha))}</td>
-        <td class="col-dia">${fmtDia(v.fecha)}</td>
         <td class="col-lugar">${esc(v.origen)}</td>
         <td class="col-lugar">${esc(v.destino)}</td>
         <td class="col-km${v.estado==='aprobado'&&kmDif?' aprobado':''}" style="text-align:right;">${kmCell}</td>
@@ -892,8 +989,8 @@ function renderAdminViajes(){
     const wrap=el('<div class="trip-table-wrap"></div>');
     const tbl=el(`<table class="trip-table">
       <thead><tr>
-        <th>Fecha</th><th>Día</th><th>Sale de</th><th>Llega a</th>
-        <th>Chofer</th><th>Patente</th>
+        <th>Fecha</th><th>Sale de</th><th>Llega a</th>
+        <th>Chofer</th>
         <th style="text-align:right;">Km. decl.</th><th style="text-align:right;">Km. aprobados</th>
         <th>Estado</th><th>Tipo</th><th></th>
       </tr></thead>
@@ -909,11 +1006,9 @@ function renderAdminViajes(){
         <span class="badge ${v.tipoCarga}" style="font-size:10px;">${v.tipoCarga==='peligrosa'?'⚠':'📦'}</span>`;
       const tr=el(`<tr>
         <td class="col-fecha">${esc(fmtFecha(v.fecha))}</td>
-        <td class="col-dia">${fmtDia(v.fecha)}</td>
         <td class="col-lugar">${esc(v.origen)}</td>
         <td class="col-lugar">${esc(v.destino)}</td>
         <td style="font-size:12px;">${esc(v.choferNombre)}</td>
-        <td style="font-size:11px;color:var(--muted);">${esc(v.patente||'—')}</td>
         <td class="col-km" style="text-align:right;">${v.km}</td>
         <td style="text-align:right;font-family:'Barlow Condensed';font-weight:800;font-size:15px;color:${v.kmAprobados?'var(--good)':'var(--muted)'};">${
           v.kmAprobados?v.kmAprobados:'—'
@@ -924,12 +1019,11 @@ function renderAdminViajes(){
       </tr>`);
       tr.querySelector('.icon-btn').onclick=()=>adminEliminarViaje(v.id);
       tbody.appendChild(tr);
-      // Fila extra si hay obs del JT o del chofer
       const extras=[];
       if(v.observacionJT) extras.push(`<span style="color:${v.estado==='rechazado'?'#ff9999':'var(--good)'};">JT: ${esc(v.observacionJT)}</span>`);
       if(v.observaciones) extras.push(`💬 ${esc(v.observaciones)}`);
       if(extras.length){
-        const extr=el(`<tr><td colspan="11" style="padding:2px 10px 8px;font-size:11px;color:var(--muted);">${extras.join(' &nbsp;·&nbsp; ')}</td></tr>`);
+        const extr=el(`<tr><td colspan="9" style="padding:2px 10px 8px;font-size:11px;color:var(--muted);">${extras.join(' &nbsp;·&nbsp; ')}</td></tr>`);
         tbody.appendChild(extr);
       }
     });
