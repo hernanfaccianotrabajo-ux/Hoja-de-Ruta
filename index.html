@@ -171,7 +171,7 @@ const state = {
   adminToken:null, adminConfigurado:null, adminTab:'viajes',
   viajes:[], choferesAdmin:[], filtroChofer:'', filtroEstado:'todos',
   // jefe de tráfico
-  jtToken:null, jtConfigurado:null, viajesPendientes:[],
+  jtToken:null, jtConfigurado:null, viajesPendientes:[], filtroMesJT:'todos',
   // ui
   loading:false, msg:null, modal:null,
 };
@@ -906,7 +906,9 @@ function renderLoginJT(){
 /* ---- PANEL JT ---- */
 function renderJT(){
   const wrap=document.createDocumentFragment();
-  const count=state.viajesPendientes.length;
+  const pendientes=state.viajesPendientes.filter(v=>viajeEnPeriodo(v,state.filtroMesJT));
+  const count=pendientes.length;
+  const periodoLabel=state.filtroMesJT!=='todos'?fmtPeriodo(state.filtroMesJT):'';
   const header=el(`<div class="card">
     <div class="stat-row">
       <div class="stat"><div class="num nums">${count}</div><div class="lbl">Pendientes</div></div>
@@ -919,13 +921,31 @@ function renderJT(){
   const listCard=el(`<div class="card">
     <h2>Viajes pendientes${count?`<span class="pending-badge">${count}</span>`:''}</h2>
     <div class="hint">Revisá cada viaje y aprobalo o rechazalo.</div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>Mes de facturación</label>
+      <select id="sel-mes-jt"></select>
+    </div>
+    ${periodoLabel?`<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">📅 Período: ${periodoLabel}</div>`:''}
     <div id="lista-pendientes"></div>
   </div>`);
+
+  // Selector de mes: usa los meses de los viajes pendientes + los últimos 6 meses
+  const selMes=listCard.querySelector('#sel-mes-jt');
+  const optTodos=el('<option value="todos">Todos los meses</option>');
+  if(state.filtroMesJT==='todos') optTodos.selected=true;
+  selMes.appendChild(optTodos);
+  opcionesMesesFacturacion(state.viajesPendientes).forEach(o=>{
+    const opt=el(`<option value="${o.key}">${esc(o.label)}</option>`);
+    if(o.key===state.filtroMesJT) opt.selected=true;
+    selMes.appendChild(opt);
+  });
+  selMes.onchange=()=>setState({filtroMesJT:selMes.value});
+
   const lp=listCard.querySelector('#lista-pendientes');
   if(!count){
-    lp.appendChild(el('<div class="empty">✅ No hay viajes pendientes de aprobación.</div>'));
+    lp.appendChild(el(`<div class="empty">${state.viajesPendientes.length?'No hay viajes pendientes en este período.':'✅ No hay viajes pendientes de aprobación.'}</div>`));
   } else {
-    state.viajesPendientes.forEach(v=>{
+    pendientes.forEach(v=>{
       const tc=el(`<div class="trip-card">
         <div class="top"><span class="route">${esc(v.origen)} → ${esc(v.destino)}</span><span class="km nums">${v.km} km</span></div>
         <div class="meta">${esc(v.choferNombre)} · ${esc(v.patente||'sin patente')} · ${fmtFecha(v.fecha)}</div>
